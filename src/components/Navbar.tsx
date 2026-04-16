@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Bell, ChevronDown, User, Settings, HelpCircle, LogOut, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useLocation } from "react-router-dom";
 
 interface NavbarProps {
   onSearchToggle: () => void;
-  searchOpen: boolean;
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
+  searchOpen?: boolean;
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
 }
 
 const profileMenuItems = [
@@ -16,11 +17,20 @@ const profileMenuItems = [
   { icon: LogOut, label: "Sign out of Flixora" },
 ];
 
-export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange }: NavbarProps) => {
+const navLinks = [
+  { label: "Home", to: "/" },
+  { label: "TV Shows", to: "/tv-shows" },
+  { label: "Movies", to: "/movies" },
+  { label: "New & Popular", to: "/browse" },
+  { label: "My List", to: "/browse" },
+];
+
+export const Navbar = ({ onSearchToggle }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
@@ -30,15 +40,11 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
-        setProfileOpen(false);
-      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const navLinks = ["Home", "TV Shows", "Movies", "New & Popular", "My List"];
 
   return (
     <motion.nav
@@ -52,50 +58,32 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
       }`}
     >
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 flex items-center justify-between h-16 md:h-[72px]">
-        {/* Logo */}
         <div className="flex items-center gap-8">
-          <h1 className="font-display text-3xl md:text-4xl tracking-[0.15em] text-gradient cursor-pointer select-none">
-            FLIXORA
-          </h1>
+          <Link to="/">
+            <h1 className="font-display text-3xl md:text-4xl tracking-[0.15em] text-gradient cursor-pointer select-none">
+              FLIXORA
+            </h1>
+          </Link>
 
-          {/* Desktop Nav */}
           <div className="hidden lg:flex items-center gap-5">
-            {navLinks.map((link, i) => (
-              <button
-                key={link}
-                className={`text-[13px] font-medium transition-colors duration-200 ${
-                  i === 0 ? "text-foreground font-bold" : "text-muted-foreground hover:text-foreground/80"
-                }`}
-              >
-                {link}
-              </button>
-            ))}
+            {navLinks.map((link) => {
+              const active = location.pathname === link.to;
+              return (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  className={`text-[13px] font-medium transition-colors duration-200 ${
+                    active ? "text-foreground font-bold" : "text-muted-foreground hover:text-foreground/80"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
         </div>
 
-        {/* Right Section */}
         <div className="flex items-center gap-2">
-          {/* Search */}
-          <AnimatePresence>
-            {searchOpen && (
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 240, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden"
-              >
-                <input
-                  type="text"
-                  placeholder="Titles, people, genres"
-                  value={searchQuery}
-                  onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full bg-background/80 border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
-                  autoFocus
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
           <button
             onClick={onSearchToggle}
             className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -103,18 +91,13 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
             <Search className="w-5 h-5" />
           </button>
 
-          {/* Notifications */}
           <button className="p-2 text-muted-foreground hover:text-foreground transition-colors hidden sm:flex relative">
             <Bell className="w-5 h-5" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
           </button>
 
-          {/* Profile Dropdown */}
           <div ref={profileRef} className="relative hidden sm:block">
-            <button
-              onClick={() => setProfileOpen(!profileOpen)}
-              className="flex items-center gap-1.5 group"
-            >
+            <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-1.5 group">
               <div className="w-8 h-8 rounded overflow-hidden bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center ring-1 ring-transparent group-hover:ring-muted-foreground/30 transition-all">
                 <User className="w-4 h-4 text-primary-foreground" />
               </div>
@@ -130,7 +113,6 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
                   transition={{ duration: 0.15 }}
                   className="absolute right-0 top-full mt-2 w-56 bg-background/95 backdrop-blur-md border border-border rounded-md shadow-[0_8px_40px_rgba(0,0,0,0.6)] overflow-hidden"
                 >
-                  {/* Profile header */}
                   <div className="px-4 py-3 border-b border-border flex items-center gap-3">
                     <div className="w-8 h-8 rounded bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center">
                       <User className="w-4 h-4 text-primary-foreground" />
@@ -140,7 +122,6 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
                       <p className="text-xs text-muted-foreground">Premium Plan</p>
                     </div>
                   </div>
-                  {/* Menu items */}
                   <div className="py-1">
                     {profileMenuItems.map((item) => (
                       <button
@@ -157,17 +138,12 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
             </AnimatePresence>
           </div>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            onClick={() => setMobileMenu(!mobileMenu)}
-            className="p-2 text-muted-foreground hover:text-foreground lg:hidden"
-          >
+          <button onClick={() => setMobileMenu(!mobileMenu)} className="p-2 text-muted-foreground hover:text-foreground lg:hidden">
             {mobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenu && (
           <motion.div
@@ -178,22 +154,21 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
             className="lg:hidden bg-background/95 backdrop-blur-md border-t border-border overflow-hidden"
           >
             <div className="px-6 py-4 flex flex-col gap-1">
-              {navLinks.map((link, i) => (
-                <button
-                  key={link}
+              {navLinks.map((link) => (
+                <Link
+                  key={link.label}
+                  to={link.to}
+                  onClick={() => setMobileMenu(false)}
                   className={`text-left text-sm py-2 font-medium transition-colors ${
-                    i === 0 ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                    location.pathname === link.to ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {link}
-                </button>
+                  {link.label}
+                </Link>
               ))}
               <div className="border-t border-border mt-2 pt-2">
                 {profileMenuItems.map((item) => (
-                  <button
-                    key={item.label}
-                    className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                  >
+                  <button key={item.label} className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
                     <item.icon className="w-4 h-4" />
                     {item.label}
                   </button>

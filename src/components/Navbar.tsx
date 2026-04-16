@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Search, Bell, User, Menu, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Bell, ChevronDown, User, Settings, HelpCircle, LogOut, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface NavbarProps {
@@ -9,9 +9,18 @@ interface NavbarProps {
   onSearchChange: (q: string) => void;
 }
 
+const profileMenuItems = [
+  { icon: User, label: "Manage Profiles" },
+  { icon: Settings, label: "Account" },
+  { icon: HelpCircle, label: "Help Center" },
+  { icon: LogOut, label: "Sign out of Flixora" },
+];
+
 export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
@@ -19,7 +28,17 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  const navLinks = ["Home", "Series", "Movies", "New & Popular", "My List"];
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const navLinks = ["Home", "TV Shows", "Movies", "New & Popular", "My List"];
 
   return (
     <motion.nav
@@ -27,43 +46,54 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
       animate={{ y: 0 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled ? "bg-background/95 backdrop-blur-md shadow-lg" : "bg-gradient-to-b from-background/80 to-transparent"
+        scrolled
+          ? "bg-background/95 backdrop-blur-md shadow-[0_2px_20px_rgba(0,0,0,0.5)]"
+          : "bg-gradient-to-b from-background/80 via-background/40 to-transparent"
       }`}
     >
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 flex items-center justify-between h-16 md:h-20">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 flex items-center justify-between h-16 md:h-[72px]">
         {/* Logo */}
-        <h1 className="font-display text-3xl md:text-4xl tracking-widest text-gradient cursor-pointer select-none">
-          FLIXORA
-        </h1>
+        <div className="flex items-center gap-8">
+          <h1 className="font-display text-3xl md:text-4xl tracking-[0.15em] text-gradient cursor-pointer select-none">
+            FLIXORA
+          </h1>
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <button
-              key={link}
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200"
-            >
-              {link}
-            </button>
-          ))}
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-5">
+            {navLinks.map((link, i) => (
+              <button
+                key={link}
+                className={`text-[13px] font-medium transition-colors duration-200 ${
+                  i === 0 ? "text-foreground font-bold" : "text-muted-foreground hover:text-foreground/80"
+                }`}
+              >
+                {link}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Right Section */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* Search */}
           <AnimatePresence>
             {searchOpen && (
-              <motion.input
+              <motion.div
                 initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 200, opacity: 1 }}
+                animate={{ width: 240, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                type="text"
-                placeholder="Search titles..."
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="bg-secondary border border-border rounded-md px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                autoFocus
-              />
+                className="overflow-hidden"
+              >
+                <input
+                  type="text"
+                  placeholder="Titles, people, genres"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                  className="w-full bg-background/80 border border-border rounded px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/50"
+                  autoFocus
+                />
+              </motion.div>
             )}
           </AnimatePresence>
           <button
@@ -72,15 +102,65 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
           >
             <Search className="w-5 h-5" />
           </button>
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
+
+          {/* Notifications */}
+          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors hidden sm:flex relative">
             <Bell className="w-5 h-5" />
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
           </button>
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors hidden sm:block">
-            <User className="w-5 h-5" />
-          </button>
+
+          {/* Profile Dropdown */}
+          <div ref={profileRef} className="relative hidden sm:block">
+            <button
+              onClick={() => setProfileOpen(!profileOpen)}
+              className="flex items-center gap-1.5 group"
+            >
+              <div className="w-8 h-8 rounded overflow-hidden bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center ring-1 ring-transparent group-hover:ring-muted-foreground/30 transition-all">
+                <User className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            <AnimatePresence>
+              {profileOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-2 w-56 bg-background/95 backdrop-blur-md border border-border rounded-md shadow-[0_8px_40px_rgba(0,0,0,0.6)] overflow-hidden"
+                >
+                  {/* Profile header */}
+                  <div className="px-4 py-3 border-b border-border flex items-center gap-3">
+                    <div className="w-8 h-8 rounded bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center">
+                      <User className="w-4 h-4 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">User</p>
+                      <p className="text-xs text-muted-foreground">Premium Plan</p>
+                    </div>
+                  </div>
+                  {/* Menu items */}
+                  <div className="py-1">
+                    {profileMenuItems.map((item) => (
+                      <button
+                        key={item.label}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenu(!mobileMenu)}
-            className="p-2 text-muted-foreground hover:text-foreground md:hidden"
+            className="p-2 text-muted-foreground hover:text-foreground lg:hidden"
           >
             {mobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -94,17 +174,31 @@ export const Navbar = ({ onSearchToggle, searchOpen, searchQuery, onSearchChange
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="md:hidden bg-background/95 backdrop-blur-md border-t border-border overflow-hidden"
+            transition={{ duration: 0.25 }}
+            className="lg:hidden bg-background/95 backdrop-blur-md border-t border-border overflow-hidden"
           >
-            <div className="px-6 py-4 flex flex-col gap-3">
-              {navLinks.map((link) => (
+            <div className="px-6 py-4 flex flex-col gap-1">
+              {navLinks.map((link, i) => (
                 <button
                   key={link}
-                  className="text-left text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className={`text-left text-sm py-2 font-medium transition-colors ${
+                    i === 0 ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
                 >
                   {link}
                 </button>
               ))}
+              <div className="border-t border-border mt-2 pt-2">
+                {profileMenuItems.map((item) => (
+                  <button
+                    key={item.label}
+                    className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
         )}

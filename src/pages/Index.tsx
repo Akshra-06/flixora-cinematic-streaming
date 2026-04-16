@@ -4,7 +4,10 @@ import { HeroBanner } from "@/components/HeroBanner";
 import { ContentRow } from "@/components/ContentRow";
 import { Footer } from "@/components/Footer";
 import { MovieCard } from "@/components/MovieCard";
-import { trendingMovies, newReleases, sciFiMovies, actionMovies, dramaMovies, movies } from "@/data/movies";
+import {
+  trendingMovies, topRated, newReleases, actionMovies,
+  comedyMovies, recentlyAdded, movies,
+} from "@/data/movies";
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -14,9 +17,7 @@ const Index = () => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
     return movies.filter(
-      (m) =>
-        m.title.toLowerCase().includes(q) ||
-        m.genre.toLowerCase().includes(q)
+      (m) => m.title.toLowerCase().includes(q) || m.genre.toLowerCase().includes(q)
     );
   }, [searchQuery]);
 
@@ -56,10 +57,10 @@ const Index = () => {
           <HeroBanner />
           <div className="relative z-10 -mt-16 md:-mt-24">
             <ContentRow title="Trending Now" movies={trendingMovies} />
-            <ContentRow title="New Releases" movies={newReleases} />
-            <ContentRow title="Sci-Fi Collection" movies={sciFiMovies} />
-            <ContentRow title="Action & Thrills" movies={actionMovies} />
-            <ContentRow title="Dramas" movies={dramaMovies} />
+            <ContentRow title="Top Rated" movies={topRated} />
+            <ContentRow title="Action Movies" movies={actionMovies} />
+            <ContentRow title="Comedy" movies={comedyMovies} />
+            <ContentRow title="Recently Added" movies={recentlyAdded} />
           </div>
         </>
       )}

@@ -1,16 +1,72 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useMemo } from "react";
+import { Navbar } from "@/components/Navbar";
+import { HeroBanner } from "@/components/HeroBanner";
+import { ContentRow } from "@/components/ContentRow";
+import { Footer } from "@/components/Footer";
+import { MovieCard } from "@/components/MovieCard";
+import { trendingMovies, newReleases, sciFiMovies, actionMovies, dramaMovies, movies } from "@/data/movies";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return movies.filter(
+      (m) =>
+        m.title.toLowerCase().includes(q) ||
+        m.genre.toLowerCase().includes(q)
+    );
+  }, [searchQuery]);
+
+  const showSearch = searchOpen && searchQuery.trim().length > 0;
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen bg-background">
+      <Navbar
+        onSearchToggle={() => {
+          setSearchOpen(!searchOpen);
+          if (searchOpen) setSearchQuery("");
+        }}
+        searchOpen={searchOpen}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+      />
+
+      {showSearch ? (
+        <div className="pt-24 md:pt-28 pb-12">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10">
+            <h3 className="font-display text-2xl md:text-3xl text-foreground mb-6 tracking-wide">
+              Results for "{searchQuery}"
+            </h3>
+            {searchResults.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {searchResults.map((movie, i) => (
+                  <MovieCard key={movie.id} movie={movie} index={i} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No titles found. Try a different search.</p>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
+          <HeroBanner />
+          <div className="relative z-10 -mt-16 md:-mt-24">
+            <ContentRow title="Trending Now" movies={trendingMovies} />
+            <ContentRow title="New Releases" movies={newReleases} />
+            <ContentRow title="Sci-Fi Collection" movies={sciFiMovies} />
+            <ContentRow title="Action & Thrills" movies={actionMovies} />
+            <ContentRow title="Dramas" movies={dramaMovies} />
+          </div>
+        </>
+      )}
+
+      <Footer />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;

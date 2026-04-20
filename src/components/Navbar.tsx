@@ -1,7 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Bell, ChevronDown, User, Settings, HelpCircle, LogOut, Menu, X } from "lucide-react";
+import { Search, Bell, ChevronDown, User, Settings, HelpCircle, LogOut, Menu, X, Users } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useProfiles } from "@/hooks/useProfiles";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface NavbarProps {
   onSearchToggle?: () => void;
@@ -9,13 +19,6 @@ interface NavbarProps {
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
 }
-
-const profileMenuItems = [
-  { icon: User, label: "Manage Profiles" },
-  { icon: Settings, label: "Account" },
-  { icon: HelpCircle, label: "Help Center" },
-  { icon: LogOut, label: "Sign out of Flixora" },
-];
 
 const navLinks = [
   { label: "Home", to: "/" },
@@ -29,8 +32,11 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [logoutOpen, setLogoutOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { activeProfile, clearActive } = useProfiles();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
@@ -45,6 +51,30 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  const handleSignOut = () => {
+    clearActive();
+    setLogoutOpen(false);
+    setProfileOpen(false);
+    navigate("/profiles");
+  };
+
+  const profileMenuItems = [
+    { icon: Users, label: "Manage Profiles", action: () => navigate("/profiles") },
+    { icon: Settings, label: "Account", action: () => navigate("/account") },
+    { icon: HelpCircle, label: "Help Center", action: () => navigate("/help") },
+    { icon: LogOut, label: "Sign out of Flixora", action: () => setLogoutOpen(true) },
+  ];
+
+  const avatarNode = activeProfile ? (
+    <div className={`w-8 h-8 rounded overflow-hidden bg-gradient-to-br ${activeProfile.color} flex items-center justify-center text-base ring-1 ring-transparent group-hover:ring-muted-foreground/30 transition-all`}>
+      <span>{activeProfile.avatar}</span>
+    </div>
+  ) : (
+    <div className="w-8 h-8 rounded overflow-hidden bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center ring-1 ring-transparent group-hover:ring-muted-foreground/30 transition-all">
+      <User className="w-4 h-4 text-primary-foreground" />
+    </div>
+  );
 
   return (
     <motion.nav
@@ -84,10 +114,7 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            onClick={onSearchToggle}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={onSearchToggle} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
             <Search className="w-5 h-5" />
           </button>
 
@@ -98,9 +125,7 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
 
           <div ref={profileRef} className="relative hidden sm:block">
             <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-1.5 group">
-              <div className="w-8 h-8 rounded overflow-hidden bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center ring-1 ring-transparent group-hover:ring-muted-foreground/30 transition-all">
-                <User className="w-4 h-4 text-primary-foreground" />
-              </div>
+              {avatarNode}
               <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`} />
             </button>
 
@@ -114,18 +139,28 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
                   className="absolute right-0 top-full mt-2 w-56 bg-background/95 backdrop-blur-md border border-border rounded-md shadow-[0_8px_40px_rgba(0,0,0,0.6)] overflow-hidden"
                 >
                   <div className="px-4 py-3 border-b border-border flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center">
-                      <User className="w-4 h-4 text-primary-foreground" />
-                    </div>
+                    {activeProfile ? (
+                      <div className={`w-8 h-8 rounded bg-gradient-to-br ${activeProfile.color} flex items-center justify-center text-base`}>
+                        <span>{activeProfile.avatar}</span>
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-gradient-to-br from-primary/80 to-primary/40 flex items-center justify-center">
+                        <User className="w-4 h-4 text-primary-foreground" />
+                      </div>
+                    )}
                     <div>
-                      <p className="text-sm font-semibold text-foreground">User</p>
-                      <p className="text-xs text-muted-foreground">Premium Plan</p>
+                      <p className="text-sm font-semibold text-foreground">{activeProfile?.name ?? "Guest"}</p>
+                      <p className="text-xs text-muted-foreground">{activeProfile?.isKids ? "Kids profile" : "Premium plan"}</p>
                     </div>
                   </div>
                   <div className="py-1">
                     {profileMenuItems.map((item) => (
                       <button
                         key={item.label}
+                        onClick={() => {
+                          setProfileOpen(false);
+                          item.action();
+                        }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
                       >
                         <item.icon className="w-4 h-4" />
@@ -168,7 +203,14 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
               ))}
               <div className="border-t border-border mt-2 pt-2">
                 {profileMenuItems.map((item) => (
-                  <button key={item.label} className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      setMobileMenu(false);
+                      item.action();
+                    }}
+                    className="w-full flex items-center gap-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
                     <item.icon className="w-4 h-4" />
                     {item.label}
                   </button>
@@ -178,6 +220,21 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <Dialog open={logoutOpen} onOpenChange={setLogoutOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Sign out of Flixora?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to sign out? You'll be returned to the profile selection screen.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLogoutOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={handleSignOut}>Sign out</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </motion.nav>
   );
 };

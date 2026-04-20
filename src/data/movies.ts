@@ -12,7 +12,26 @@ export interface Content {
   match?: number;
   type: "movie" | "tv";
   seasons?: number;
+  videoUrl?: string;
+  cast?: string[];
+  director?: string;
 }
+
+const SAMPLE_VIDEOS = [
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+  "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+];
+
+const CAST_POOL = [
+  ["Ava Mercer", "Liam Castro", "Naomi Park", "Diego Oduya"],
+  ["Soren Vale", "Mira Holloway", "Jasper Quinn", "Indira Rao"],
+  ["Eli Bishop", "Tessa Lin", "Marcus Wren", "Yuki Tanaka"],
+  ["Cleo Marsh", "Owen Drake", "Sasha Volkov", "Reza Khan"],
+  ["Nora Vance", "Theo Aslan", "Priya Shah", "Felix Moreau"],
+];
 
 const P = "https://images.unsplash.com";
 
@@ -70,3 +89,22 @@ export const newReleases = allContent.filter(m => m.year === 2024);
 export const actionMovies = allContent.filter(m => m.genre === "Action");
 export const comedyMovies = allContent.filter(m => m.genre === "Comedy");
 export const recentlyAdded = [...allContent].reverse().slice(0, 10);
+
+// Enrich items with video + cast
+allContent.forEach((c, i) => {
+  c.videoUrl = SAMPLE_VIDEOS[i % SAMPLE_VIDEOS.length];
+  c.cast = CAST_POOL[i % CAST_POOL.length];
+  c.director = ["Aria Vance", "Kenji Mori", "Lena Okafor", "Sam Hartley", "Iris Bloom"][i % 5];
+});
+
+export const getById = (id: number) => allContent.find(c => c.id === id);
+
+export const getSimilar = (item: Content, limit = 6) =>
+  allContent
+    .filter(c => c.id !== item.id && (c.genre === item.genre || c.type === item.type))
+    .slice(0, limit);
+
+export const getNextEpisode = (item: Content) => {
+  const pool = allContent.filter(c => c.type === item.type && c.id !== item.id);
+  return pool[Math.floor(Math.random() * pool.length)] || allContent[0];
+};

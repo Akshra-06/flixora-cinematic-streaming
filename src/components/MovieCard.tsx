@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Plus, ThumbsUp, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import type { Movie } from "@/data/movies";
 
 interface MovieCardProps {
@@ -9,6 +10,7 @@ interface MovieCardProps {
 }
 
 export const MovieCard = ({ movie, index }: MovieCardProps) => {
+  const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
   const [showExpanded, setShowExpanded] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -42,14 +44,16 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
       onMouseLeave={handleLeave}
     >
       {/* Base Card */}
-      <div className="relative aspect-[2/3] rounded-md overflow-hidden bg-card cursor-pointer">
+      <div
+        onClick={() => navigate(`/title/${movie.id}`)}
+        className="relative aspect-[2/3] rounded-md overflow-hidden bg-card cursor-pointer"
+      >
         <img
           src={movie.image}
           alt={movie.title}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           loading="lazy"
         />
-        {/* Subtle gradient always visible */}
         <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-background/70 to-transparent" />
       </div>
 
@@ -85,7 +89,10 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
             <div className="p-3.5">
               {/* Action buttons */}
               <div className="flex items-center gap-2 mb-3">
-                <button className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:bg-primary/85 transition-all duration-200 hover:scale-110 neon-glow">
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate(`/watch/${movie.id}`); }}
+                  className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:bg-primary/85 transition-all duration-200 hover:scale-110 neon-glow"
+                >
                   <Play className="w-4 h-4 fill-primary-foreground text-primary-foreground ml-0.5" />
                 </button>
                 <button className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30">
@@ -94,7 +101,10 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
                 <button className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30">
                   <ThumbsUp className="w-4 h-4 text-foreground" />
                 </button>
-                <button className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30 ml-auto">
+                <button
+                  onClick={(e) => { e.stopPropagation(); navigate(`/title/${movie.id}`); }}
+                  className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30 ml-auto"
+                >
                   <ChevronDown className="w-4 h-4 text-foreground" />
                 </button>
               </div>

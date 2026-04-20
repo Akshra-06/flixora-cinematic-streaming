@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import { MoviesPage, TVShowsPage, BrowseAllPage } from "./pages/Browse.tsx";
+import Detail from "./pages/Detail.tsx";
+import Watch from "./pages/Watch.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -20,6 +22,8 @@ const App = () => (
           <Route path="/movies" element={<MoviesPage />} />
           <Route path="/tv-shows" element={<TVShowsPage />} />
           <Route path="/browse" element={<BrowseAllPage />} />
+          <Route path="/title/:id" element={<Detail />} />
+          <Route path="/watch/:id" element={<Watch />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

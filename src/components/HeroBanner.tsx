@@ -1,9 +1,11 @@
 import { Play, Info } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { featuredMovie } from "@/data/movies";
 import heroBg from "@/assets/hero-bg.jpg";
 
 export const HeroBanner = () => {
+  const navigate = useNavigate();
   return (
     <div className="relative w-full h-[90vh] min-h-[550px] overflow-hidden cinema-vignette">
       {/* Background Image with subtle zoom */}
@@ -64,11 +66,17 @@ export const HeroBanner = () => {
               transition={{ duration: 0.5, delay: 1 }}
               className="flex items-center gap-3"
             >
-              <button className="flex items-center gap-2.5 bg-primary hover:bg-primary/85 text-primary-foreground font-bold px-8 py-3.5 rounded-md transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_hsl(1_100%_47%/0.3)] text-sm uppercase tracking-wider">
+              <button
+                onClick={() => navigate(`/watch/${featuredMovie.id}`)}
+                className="flex items-center gap-2.5 bg-primary hover:bg-primary/85 text-primary-foreground font-bold px-8 py-3.5 rounded-md transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_hsl(1_100%_47%/0.3)] text-sm uppercase tracking-wider"
+              >
                 <Play className="w-5 h-5 fill-current" />
                 Play Now
               </button>
-              <button className="flex items-center gap-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground font-semibold px-8 py-3.5 rounded-md transition-all duration-300 backdrop-blur-sm text-sm uppercase tracking-wider">
+              <button
+                onClick={() => navigate(`/title/${featuredMovie.id}`)}
+                className="flex items-center gap-2.5 bg-secondary/80 hover:bg-secondary text-secondary-foreground font-semibold px-8 py-3.5 rounded-md transition-all duration-300 backdrop-blur-sm text-sm uppercase tracking-wider"
+              >
                 <Info className="w-5 h-5" />
                 More Info
               </button>

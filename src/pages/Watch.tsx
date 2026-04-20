@@ -23,6 +23,7 @@ const Watch = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+  const { recordWatch } = useWatchHistory();
 
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -35,6 +36,12 @@ const Watch = () => {
   const [nextCountdown, setNextCountdown] = useState(10);
 
   const nextItem: Content | undefined = item ? getNextEpisode(item) : undefined;
+
+  // Record watch in history
+  useEffect(() => {
+    if (item) recordWatch(item.id);
+  }, [item, recordWatch]);
+
 
   // Auto-hide controls
   const bumpControls = useCallback(() => {

@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { getById, getNextEpisode, type Content } from "@/data/movies";
+import { useWatchHistory } from "@/hooks/useWatchHistory";
 
 const formatTime = (s: number) => {
   if (!isFinite(s)) return "0:00";

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "react-router-dom";
 
 interface NavbarProps {
-  onSearchToggle: () => void;
+  onSearchToggle?: () => void;
   searchOpen?: boolean;
   searchQuery?: string;
   onSearchChange?: (q: string) => void;
@@ -25,7 +25,7 @@ const navLinks = [
   { label: "My List", to: "/browse" },
 ];
 
-export const Navbar = ({ onSearchToggle }: NavbarProps) => {
+export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);

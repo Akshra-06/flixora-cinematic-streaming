@@ -10,6 +10,7 @@ import Watch from "./pages/Watch.tsx";
 import Profiles from "./pages/Profiles.tsx";
 import Account from "./pages/Account.tsx";
 import Help from "./pages/Help.tsx";
+import MyList from "./pages/MyList.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/title/:id" element={<Detail />} />
           <Route path="/watch/:id" element={<Watch />} />
           <Route path="/profiles" element={<Profiles />} />
+          <Route path="/my-list" element={<MyList />} />
           <Route path="/account" element={<Account />} />
           <Route path="/help" element={<Help />} />
           <Route path="*" element={<NotFound />} />

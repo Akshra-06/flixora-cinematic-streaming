@@ -88,7 +88,7 @@ export const Footer = () => {
                 aria-label={s.label}
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                <s.icon className="w-5 h-5" />
+                <span className="text-sm font-bold">{s.letter}</span>
               </a>
             ))}
           </div>

@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Plus, ThumbsUp, ChevronDown } from "lucide-react";
+import { Play, Plus, Check, ThumbsUp, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { useMyList } from "@/hooks/useMyList";
 import type { Movie } from "@/data/movies";
 
 interface MovieCardProps {
@@ -11,6 +13,8 @@ interface MovieCardProps {
 
 export const MovieCard = ({ movie, index }: MovieCardProps) => {
   const navigate = useNavigate();
+  const { has, toggle } = useMyList();
+  const inList = has(movie.id);
   const [hovered, setHovered] = useState(false);
   const [showExpanded, setShowExpanded] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -95,8 +99,16 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
                 >
                   <Play className="w-4 h-4 fill-primary-foreground text-primary-foreground ml-0.5" />
                 </button>
-                <button className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30">
-                  <Plus className="w-4 h-4 text-foreground" />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const added = toggle(movie.id);
+                    toast(added ? "Added to My List" : "Removed from My List");
+                  }}
+                  title={inList ? "Remove from My List" : "Add to My List"}
+                  className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30"
+                >
+                  {inList ? <Check className="w-4 h-4 text-primary" /> : <Plus className="w-4 h-4 text-foreground" />}
                 </button>
                 <button className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30">
                   <ThumbsUp className="w-4 h-4 text-foreground" />

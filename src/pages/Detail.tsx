@@ -1,13 +1,16 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { Play, Plus, ThumbsUp, Share2, ArrowLeft } from "lucide-react";
+import { Play, Plus, Check, ThumbsUp, Share2, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { MovieCard } from "@/components/MovieCard";
 import { getById, getSimilar } from "@/data/movies";
+import { useMyList } from "@/hooks/useMyList";
 
 const Detail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { has, toggle } = useMyList();
   const item = getById(Number(id));
 
   if (!item) {
@@ -68,8 +71,12 @@ const Detail = () => {
               >
                 <Play className="w-5 h-5 fill-background" /> Play
               </button>
-              <button className="bg-secondary/80 text-foreground px-5 py-3 rounded font-semibold flex items-center gap-2 hover:bg-secondary transition">
-                <Plus className="w-5 h-5" /> My List
+              <button
+                onClick={() => { const added = toggle(item.id); toast(added ? "Added to My List" : "Removed from My List"); }}
+                className="bg-secondary/80 text-foreground px-5 py-3 rounded font-semibold flex items-center gap-2 hover:bg-secondary transition"
+              >
+                {has(item.id) ? <Check className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5" />}
+                {has(item.id) ? "In My List" : "My List"}
               </button>
               <button className="w-11 h-11 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition">
                 <ThumbsUp className="w-5 h-5" />

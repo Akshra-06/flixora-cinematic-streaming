@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Linkedin, Twitter, Instagram } from "lucide-react";
+import { LinkedinIcon, TwitterIcon, InstagramIcon } from "lucide-react";
 
 const sections = [
   {

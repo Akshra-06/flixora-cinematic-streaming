@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { LinkedinIcon, TwitterIcon, InstagramIcon } from "lucide-react";
+import { Globe } from "lucide-react";
 
 const sections = [
   {
@@ -39,9 +39,9 @@ const sections = [
 ];
 
 const socials = [
-  { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-  { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-  { icon: Instagram, href: "https://instagram.com", label: "Instagram" },
+  { label: "LinkedIn", href: "https://linkedin.com", letter: "in" },
+  { label: "Twitter", href: "https://twitter.com", letter: "𝕏" },
+  { label: "Instagram", href: "https://instagram.com", letter: "📷" },
 ];
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });

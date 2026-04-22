@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,32 +12,46 @@ import Profiles from "./pages/Profiles.tsx";
 import Account from "./pages/Account.tsx";
 import Help from "./pages/Help.tsx";
 import MyList from "./pages/MyList.tsx";
+import Favorites from "./pages/Favorites.tsx";
+import About from "./pages/About.tsx";
+import Terms from "./pages/Terms.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Cookies from "./pages/Cookies.tsx";
+import Contact from "./pages/Contact.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/movies" element={<MoviesPage />} />
-          <Route path="/tv-shows" element={<TVShowsPage />} />
-          <Route path="/browse" element={<BrowseAllPage />} />
-          <Route path="/title/:id" element={<Detail />} />
-          <Route path="/watch/:id" element={<Watch />} />
-          <Route path="/profiles" element={<Profiles />} />
-          <Route path="/my-list" element={<MyList />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/help" element={<Help />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/movies" element={<MoviesPage />} />
+            <Route path="/tv-shows" element={<TVShowsPage />} />
+            <Route path="/browse" element={<BrowseAllPage />} />
+            <Route path="/title/:id" element={<Detail />} />
+            <Route path="/watch/:id" element={<Watch />} />
+            <Route path="/profiles" element={<Profiles />} />
+            <Route path="/my-list" element={<MyList />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/terms" element={<Terms />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/cookies" element={<Cookies />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

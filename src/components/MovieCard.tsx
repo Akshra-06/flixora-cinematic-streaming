@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Plus, Check, ThumbsUp, ChevronDown } from "lucide-react";
+import { Play, Plus, Check, ThumbsUp, ThumbsDown, Heart, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useMyList } from "@/hooks/useMyList";
+import { useReactions } from "@/hooks/useReactions";
 import type { Movie } from "@/data/movies";
 
 interface MovieCardProps {
@@ -14,7 +15,9 @@ interface MovieCardProps {
 export const MovieCard = ({ movie, index }: MovieCardProps) => {
   const navigate = useNavigate();
   const { has, toggle } = useMyList();
+  const { getReaction, setReaction } = useReactions();
   const inList = has(movie.id);
+  const reaction = getReaction(movie.id);
   const [hovered, setHovered] = useState(false);
   const [showExpanded, setShowExpanded] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -35,6 +38,14 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
     setHovered(false);
     setShowExpanded(false);
     if (hoverTimer.current) clearTimeout(hoverTimer.current);
+  };
+
+  const handleReaction = (e: React.MouseEvent, type: "like" | "dislike" | "favorite") => {
+    e.stopPropagation();
+    const wasSet = setReaction(movie.id, type);
+    const labels = { like: "Liked", dislike: "Disliked", favorite: "Added to Favorites" };
+    const removeLabels = { like: "Like removed", dislike: "Dislike removed", favorite: "Removed from Favorites" };
+    toast(wasSet ? labels[type] : removeLabels[type]);
   };
 
   return (
@@ -71,7 +82,7 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="absolute -top-4 -left-4 -right-4 z-30 rounded-lg overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.8)] bg-card border border-border/50"
           >
-            {/* Preview Image with animated overlay */}
+            {/* Preview Image */}
             <div className="relative aspect-video overflow-hidden">
               <motion.img
                 src={movie.image}
@@ -82,8 +93,6 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
                 transition={{ duration: 6, ease: "linear" }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
-
-              {/* Simulated preview indicator */}
               <div className="absolute top-3 right-3">
                 <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               </div>
@@ -110,8 +119,27 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
                 >
                   {inList ? <Check className="w-4 h-4 text-primary" /> : <Plus className="w-4 h-4 text-foreground" />}
                 </button>
-                <button className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30">
-                  <ThumbsUp className="w-4 h-4 text-foreground" />
+                <button
+                  onClick={(e) => handleReaction(e, "like")}
+                  title="Like"
+                  className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all duration-200 hover:scale-110 ${
+                    reaction === "like"
+                      ? "border-primary bg-primary/20"
+                      : "border-muted-foreground/40 hover:border-foreground bg-background/30"
+                  }`}
+                >
+                  <ThumbsUp className={`w-4 h-4 ${reaction === "like" ? "text-primary" : "text-foreground"}`} />
+                </button>
+                <button
+                  onClick={(e) => handleReaction(e, "favorite")}
+                  title="Favorite"
+                  className={`w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all duration-200 hover:scale-110 ${
+                    reaction === "favorite"
+                      ? "border-destructive bg-destructive/20"
+                      : "border-muted-foreground/40 hover:border-foreground bg-background/30"
+                  }`}
+                >
+                  <Heart className={`w-4 h-4 ${reaction === "favorite" ? "fill-destructive text-destructive" : "text-foreground"}`} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); navigate(`/title/${movie.id}`); }}

@@ -1,16 +1,18 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { Play, Plus, Check, ThumbsUp, Share2, ArrowLeft } from "lucide-react";
+import { Play, Plus, Check, ThumbsUp, ThumbsDown, Heart, Share2, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Navbar } from "@/components/Navbar";
 import { MovieCard } from "@/components/MovieCard";
 import { getById, getSimilar } from "@/data/movies";
 import { useMyList } from "@/hooks/useMyList";
+import { useReactions } from "@/hooks/useReactions";
 
 const Detail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { has, toggle } = useMyList();
+  const { getReaction, setReaction } = useReactions();
   const item = getById(Number(id));
 
   if (!item) {
@@ -78,8 +80,38 @@ const Detail = () => {
                 {has(item.id) ? <Check className="w-5 h-5 text-primary" /> : <Plus className="w-5 h-5" />}
                 {has(item.id) ? "In My List" : "My List"}
               </button>
-              <button className="w-11 h-11 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition">
-                <ThumbsUp className="w-5 h-5" />
+              <button
+                onClick={() => {
+                  const wasSet = setReaction(item.id, "like");
+                  toast(wasSet ? "Liked" : "Like removed");
+                }}
+                className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition ${
+                  getReaction(item.id) === "like" ? "border-primary bg-primary/20" : "border-muted-foreground/40 hover:border-foreground"
+                }`}
+              >
+                <ThumbsUp className={`w-5 h-5 ${getReaction(item.id) === "like" ? "text-primary" : ""}`} />
+              </button>
+              <button
+                onClick={() => {
+                  const wasSet = setReaction(item.id, "dislike");
+                  toast(wasSet ? "Disliked" : "Dislike removed");
+                }}
+                className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition ${
+                  getReaction(item.id) === "dislike" ? "border-muted-foreground bg-muted/40" : "border-muted-foreground/40 hover:border-foreground"
+                }`}
+              >
+                <ThumbsDown className={`w-5 h-5 ${getReaction(item.id) === "dislike" ? "text-muted-foreground" : ""}`} />
+              </button>
+              <button
+                onClick={() => {
+                  const wasSet = setReaction(item.id, "favorite");
+                  toast(wasSet ? "Added to Favorites ❤️" : "Removed from Favorites");
+                }}
+                className={`w-11 h-11 rounded-full border-2 flex items-center justify-center transition ${
+                  getReaction(item.id) === "favorite" ? "border-destructive bg-destructive/20" : "border-muted-foreground/40 hover:border-foreground"
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${getReaction(item.id) === "favorite" ? "fill-destructive text-destructive" : ""}`} />
               </button>
               <button className="w-11 h-11 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition">
                 <Share2 className="w-5 h-5" />

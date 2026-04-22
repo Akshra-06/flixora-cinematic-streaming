@@ -26,6 +26,7 @@ const navLinks = [
   { label: "Movies", to: "/movies" },
   { label: "New & Popular", to: "/browse" },
   { label: "My List", to: "/my-list" },
+  { label: "Favorites", to: "/favorites" },
 ];
 
 export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {

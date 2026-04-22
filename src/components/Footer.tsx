@@ -24,8 +24,8 @@ const sections = [
     title: "Support",
     links: [
       { label: "Help Center", to: "/help" },
+      { label: "Contact Us", to: "/contact" },
       { label: "FAQ", to: "/help" },
-      { label: "Contact Us", to: "/help" },
     ],
   },
   {

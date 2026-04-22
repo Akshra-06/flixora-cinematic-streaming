@@ -6,10 +6,12 @@ import { Footer } from "@/components/Footer";
 import { SmartSearch } from "@/components/SmartSearch";
 import { trendingMovies, topRated, actionMovies, comedyMovies, recentlyAdded } from "@/data/movies";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
+import { useReactions } from "@/hooks/useReactions";
 
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { recentlyWatched, forYou, becauseYouWatched, topGenres } = useWatchHistory();
+  const { liked, favorites } = useReactions();
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,6 +39,14 @@ const Index = () => {
               movies={items}
             />
           ) : null,
+        )}
+
+        {liked.length > 0 && (
+          <ContentRow title="Highly Rated by You" movies={liked} />
+        )}
+
+        {favorites.length > 0 && (
+          <ContentRow title="Your Favorites ❤️" movies={favorites} />
         )}
 
         <ContentRow title="Trending Now" movies={trendingMovies} />

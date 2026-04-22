@@ -38,8 +38,48 @@ const Watch = () => {
   const [showNextOverlay, setShowNextOverlay] = useState(false);
   const [nextCountdown, setNextCountdown] = useState(10);
   const [resumed, setResumed] = useState(false);
+  const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
+  const [trailerLoading, setTrailerLoading] = useState(false);
 
-  const nextItem: Content | undefined = item ? getNextEpisode(item) : undefined;
+  const [nextItem, setNextItem] = useState<Content | undefined>(undefined);
+
+useEffect(() => {
+  if (item) {
+    setNextItem(getNextEpisode(item));
+  }
+}, [item]);
+
+  useEffect(() => {
+    const fetchTrailer = async () => {
+      if (!item?.tmdbId) {
+        setTrailerUrl(null);
+        return;
+      }
+
+      setTrailerLoading(true);
+      try {
+        const mediaType = item.type === "tv" ? "tv" : "movie";
+      
+        const response = await fetch(
+          `http://localhost:5001/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`
+        );
+      
+        const payload = await response.json();
+      
+        if (response.ok && payload?.data?.youtubeEmbedUrl) {
+          setTrailerUrl(payload.data.youtubeEmbedUrl);
+          setUseFallback(false);
+        } else {
+          setTrailerUrl(null);
+          setUseFallback(true); // 🔥 fallback immediately
+        }
+      } catch (error) {
+        console.error("Trailer fetch failed:", error);
+        setTrailerUrl(null);
+        setUseFallback(true); // 🔥 fallback immediately
+      }};
+    fetchTrailer();
+  }, [item?.tmdbId, item?.type]);
 
   // Record watch + resume from saved progress
   useEffect(() => {
@@ -109,20 +149,18 @@ const Watch = () => {
   });
 
   useEffect(() => {
-    if (!showNextOverlay) return;
-    setNextCountdown(10);
-    const tick = setInterval(() => {
-      setNextCountdown(n => {
-        if (n <= 1) {
-          clearInterval(tick);
-          if (nextItem) navigate(`/watch/${nextItem.id}`);
-          return 0;
-        }
-        return n - 1;
-      });
-    }, 1000);
-    return () => clearInterval(tick);
-  }, [showNextOverlay, nextItem, navigate]);
+    if (!videoRef.current || videoRef.current.paused) return;
+  
+    if (showNextOverlay && nextCountdown > 0) {
+      const t = setTimeout(() => setNextCountdown(c => c - 1), 1000);
+      return () => clearTimeout(t);
+    }
+  
+    if (showNextOverlay && nextCountdown === 0 && nextItem) {
+      navigate(`/watch/${nextItem.id}`);
+    }
+  }, [showNextOverlay, nextCountdown, nextItem]);
+      
 
   if (!item) {
     return (
@@ -133,8 +171,16 @@ const Watch = () => {
   }
 
   const togglePlay = () => {
-    const v = videoRef.current; if (!v) return;
-    if (v.paused) { v.play(); setPlaying(true); } else { v.pause(); setPlaying(false); }
+    const video = videoRef.current;
+    if (!video) return;
+  
+    if (video.paused) {
+      video.play();
+      setPlaying(true);
+    } else {
+      video.pause();
+      setPlaying(false);
+    }
   };
   const toggleMute = () => {
     const v = videoRef.current; if (!v) return;
@@ -160,6 +206,12 @@ const Watch = () => {
     v.volume = nv; v.muted = nv === 0;
     setVolume(nv); setMuted(nv === 0);
   };
+  const [useFallback, setUseFallback] = useState(false);
+
+// Reset fallback when movie changes
+useEffect(() => {
+  setUseFallback(false);
+}, [item?.id]);
 
   return (
     <div
@@ -169,39 +221,69 @@ const Watch = () => {
       onMouseMove={bumpControls}
       onClick={(e) => { if (e.target === e.currentTarget) togglePlay(); }}
     >
-      <video
-        ref={videoRef}
-        src={item.videoUrl}
-        autoPlay
-        className="absolute inset-0 w-full h-full object-contain bg-black"
-        onClick={togglePlay}
-        onLoadedMetadata={(e) => {
-          setDuration(e.currentTarget.duration);
-          // Resume on metadata load
-          if (item) {
-            const saved = getProgress(item.id);
-            if (saved) e.currentTarget.currentTime = saved.time;
-          }
-        }}
-        onTimeUpdate={(e) => {
-          const v = e.currentTarget;
-          setProgress((v.currentTime / (v.duration || 1)) * 100);
-          if (v.duration && v.duration - v.currentTime <= 15 && !showNextOverlay) {
-            setShowNextOverlay(true);
-          }
-        }}
-        onEnded={() => nextItem && navigate(`/watch/${nextItem.id}`)}
-      />
+      {!useFallback && trailerUrl ? (
+  <iframe
+    src={trailerUrl}
+    title={`${item.title} trailer`}
+    allow="autoplay; encrypted-media; picture-in-picture"
+    allowFullScreen
+    className="absolute inset-0 w-full h-full bg-black"
+  />
+) : (
+  <video
+  key={item.id}   // 🔥 VERY IMPORTANT
+  ref={videoRef}
+  src={item.videoUrl}
+    autoPlay
+    muted
+    className="absolute inset-0 w-full h-full object-contain bg-black"
+    onClick={togglePlay}
+    onLoadedMetadata={(e) => {
+      setDuration(e.currentTarget.duration);
+      if (item) {
+        const saved = getProgress(item.id);
+        if (saved) e.currentTarget.currentTime = saved.time;
+      }
+    }}
+    onTimeUpdate={(e) => {
+      const v = e.currentTarget;
+    
+      if (v.paused) return;
+    
+      setProgress((v.currentTime / (v.duration || 1)) * 100);
+    
+      const remaining = v.duration - v.currentTime;
+    
+      if (v.duration && remaining <= 2 && !showNextOverlay) {
+        setShowNextOverlay(true);
+        setNextCountdown(2); // 🔥 important
+      }
+    }}
+    onEnded={() => {
+      if (!videoRef.current?.paused && nextItem) {
+        navigate(`/watch/${nextItem.id}`);
+      }
+    }}
+    
+    
+  />
+)}
 
       {/* Top gradient */}
       <AnimatePresence>
-        {showControls && (
+        {showControls && (useFallback || !trailerUrl) &&  (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/80 via-transparent to-black/90"
           />
         )}
       </AnimatePresence>
+
+      {trailerLoading && !useFallback && (
+        <div className="absolute top-24 right-6 z-20 text-xs px-3 py-1.5 rounded-full bg-background/50 border border-border/60 backdrop-blur-sm">
+          Loading trailer...
+        </div>
+      )}
 
       {/* Top bar */}
       <AnimatePresence>
@@ -211,7 +293,7 @@ const Watch = () => {
             className="absolute top-0 inset-x-0 p-6 flex items-center gap-4 z-10"
           >
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate(`/title/${item.id}`)}
               className="w-11 h-11 rounded-full bg-background/40 backdrop-blur-md flex items-center justify-center hover:bg-background/60 transition"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -307,7 +389,7 @@ const Watch = () => {
 
       {/* Next-up overlay */}
       <AnimatePresence>
-        {showNextOverlay && nextItem && (
+      {showNextOverlay && nextItem && (
           <motion.div
             initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 60 }}
             className="absolute bottom-32 right-6 w-80 bg-card/90 backdrop-blur-md border border-border rounded-lg overflow-hidden shadow-2xl z-20"
@@ -320,12 +402,16 @@ const Watch = () => {
               <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Up Next in {nextCountdown}s</p>
               <h3 className="font-bold text-lg mb-3">{nextItem.title}</h3>
               <div className="flex gap-2">
-                <button
-                  onClick={() => navigate(`/watch/${nextItem.id}`)}
-                  className="flex-1 bg-primary text-primary-foreground py-2 rounded font-semibold hover:bg-primary/90 transition flex items-center justify-center gap-2"
-                >
-                  <Play className="w-4 h-4 fill-primary-foreground" /> Play Now
-                </button>
+              <button
+  onClick={() => {
+    setShowNextOverlay(false);   // 🔥 reset overlay
+    setNextCountdown(2);         // 🔥 reset countdown
+    navigate(`/watch/${nextItem.id}`);
+  }}
+  className="flex-1 bg-primary text-primary-foreground py-2 rounded font-semibold hover:bg-primary/90 transition flex items-center justify-center gap-2"
+>
+  <Play className="w-4 h-4 fill-primary-foreground" /> Play Now
+</button>
                 <button
                   onClick={() => setShowNextOverlay(false)}
                   className="px-3 py-2 rounded border border-border hover:bg-secondary transition text-sm"

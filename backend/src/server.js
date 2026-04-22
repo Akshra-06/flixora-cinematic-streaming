@@ -28,23 +28,8 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-// Connect to MongoDB on first request (for Vercel serverless)
-let dbConnected = false;
-app.use(async (req, res, next) => {
-  if (!dbConnected) {
-    try {
-      await connectDB();
-      dbConnected = true;
-    } catch (error) {
-      console.error("MongoDB connection failed:", error.message);
-      return res.status(500).json({
-        success: false,
-        message: "Database connection failed. Please try again later.",
-      });
-    }
-  }
-  next();
-});
+// Note: MongoDB connection will be established on first database query
+// This prevents serverless function crashes on startup
 
 // API Routes
 app.use("/api/users", userRoutes);

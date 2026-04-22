@@ -6,10 +6,12 @@ const {
   createMovie,
   updateMovie,
   deleteMovie,
+  getTrailerByTmdbId,
 } = require("../controllers/movieController");
 
 // Public routes
 router.get("/", getAllMovies);
+router.get("/trailer/:tmdbId", getTrailerByTmdbId);
 router.get("/:movieId", getMovieById);
 
 // Admin routes (in production, add admin middleware)

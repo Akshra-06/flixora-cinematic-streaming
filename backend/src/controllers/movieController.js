@@ -1,6 +1,9 @@
+
 const Movie = require("../models/Movie");
 const { sendSuccess, sendError } = require("../utils/response");
 
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
+console.log("TMDB KEY:", process.env.TMDB_API_KEY);
 // Get all movies
 exports.getAllMovies = async (req, res) => {
   try {
@@ -141,5 +144,64 @@ exports.deleteMovie = async (req, res) => {
     return sendSuccess(res, 200, "Movie deleted successfully");
   } catch (error) {
     return sendError(res, 500, `Error deleting movie: ${error.message}`);
+  }
+};
+
+// Get trailer by TMDb ID
+exports.getTrailerByTmdbId = async (req, res) => {
+  try {
+    const { tmdbId } = req.params;
+    const mediaType = req.query.mediaType === "tv" ? "tv" : "movie";
+    const apiKey = process.env.TMDB_API_KEY;
+
+    if (!apiKey) {
+      return sendError(
+        res,
+        500,
+        "TMDB_API_KEY is not configured on the server",
+      );
+    }
+
+    const url = `${TMDB_BASE_URL}/${mediaType}/${tmdbId}/videos?api_key=${apiKey}`;
+    const response = await fetch(url);
+    const payload = await response.json();
+
+if (!response.ok) {
+  return sendError(
+    res,
+    response.status,
+    `TMDb request failed with status ${response.status}`,
+  );
+}
+
+const videos = Array.isArray(payload.results) ? payload.results : [];
+
+const trailer =
+  videos.find(v =>
+    v.type === "Trailer" &&
+    v.site === "YouTube" &&
+    v.official === true
+  ) ||
+  videos.find(v =>
+    v.type === "Teaser" &&
+    v.site === "YouTube"
+  ) ||
+  videos.find(v =>
+    v.site === "YouTube"
+  );
+
+    if (!trailer || !trailer.key) {
+      return sendError(res, 404, "No playable trailer found");
+    }
+
+    return sendSuccess(res, 200, "Trailer retrieved successfully", {
+      key: trailer.key,
+      name: trailer.name,
+      site: trailer.site,
+      type: trailer.type,
+      youtubeEmbedUrl: `https://www.youtube.com/embed/${trailer.key}?autoplay=1`,
+    });
+  } catch (error) {
+    return sendError(res, 500, `Error retrieving trailer: ${error.message}`);
   }
 };

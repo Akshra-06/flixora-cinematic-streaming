@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
 import { getById, getNextEpisode, type Content } from "@/data/movies";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
+import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
 
 const formatTime = (s: number) => {
   if (!isFinite(s)) return "0:00";
@@ -23,7 +24,9 @@ const Watch = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimer = useRef<ReturnType<typeof setInterval>>();
   const { recordWatch } = useWatchHistory();
+  const { getProgress, saveProgress } = usePlaybackProgress();
 
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -34,14 +37,42 @@ const Watch = () => {
   const [showControls, setShowControls] = useState(true);
   const [showNextOverlay, setShowNextOverlay] = useState(false);
   const [nextCountdown, setNextCountdown] = useState(10);
+  const [resumed, setResumed] = useState(false);
 
   const nextItem: Content | undefined = item ? getNextEpisode(item) : undefined;
 
-  // Record watch in history
+  // Record watch + resume from saved progress
   useEffect(() => {
-    if (item) recordWatch(item.id);
-  }, [item, recordWatch]);
+    if (item) {
+      recordWatch(item.id);
+      const saved = getProgress(item.id);
+      if (saved && !resumed) {
+        const v = videoRef.current;
+        if (v) {
+          v.currentTime = saved.time;
+        }
+        setResumed(true);
+      }
+    }
+  }, [item, recordWatch, getProgress, resumed]);
 
+  // Periodically save playback progress
+  useEffect(() => {
+    saveTimer.current = setInterval(() => {
+      const v = videoRef.current;
+      if (v && item && v.duration) {
+        saveProgress(item.id, v.currentTime, v.duration);
+      }
+    }, 5000);
+    return () => {
+      if (saveTimer.current) clearInterval(saveTimer.current);
+      // Save on unmount
+      const v = videoRef.current;
+      if (v && item && v.duration) {
+        saveProgress(item.id, v.currentTime, v.duration);
+      }
+    };
+  }, [item, saveProgress]);
 
   // Auto-hide controls
   const bumpControls = useCallback(() => {
@@ -57,14 +88,12 @@ const Watch = () => {
     return () => { if (hideTimer.current) clearTimeout(hideTimer.current); };
   }, [bumpControls]);
 
-  // Fullscreen tracking
   useEffect(() => {
     const onFs = () => setFullscreen(Boolean(document.fullscreenElement));
     document.addEventListener("fullscreenchange", onFs);
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === " " || e.key.toLowerCase() === "k") { e.preventDefault(); togglePlay(); }
@@ -79,7 +108,6 @@ const Watch = () => {
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  // Auto-play next countdown
   useEffect(() => {
     if (!showNextOverlay) return;
     setNextCountdown(10);
@@ -136,7 +164,7 @@ const Watch = () => {
   return (
     <div
       ref={containerRef}
-      className="relative h-screen w-screen bg-black overflow-hidden cursor-none"
+      className="relative h-screen w-screen bg-black overflow-hidden"
       style={{ cursor: showControls ? "default" : "none" }}
       onMouseMove={bumpControls}
       onClick={(e) => { if (e.target === e.currentTarget) togglePlay(); }}
@@ -147,11 +175,17 @@ const Watch = () => {
         autoPlay
         className="absolute inset-0 w-full h-full object-contain bg-black"
         onClick={togglePlay}
-        onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+        onLoadedMetadata={(e) => {
+          setDuration(e.currentTarget.duration);
+          // Resume on metadata load
+          if (item) {
+            const saved = getProgress(item.id);
+            if (saved) e.currentTarget.currentTime = saved.time;
+          }
+        }}
         onTimeUpdate={(e) => {
           const v = e.currentTarget;
           setProgress((v.currentTime / (v.duration || 1)) * 100);
-          // Trigger next-up overlay near the end
           if (v.duration && v.duration - v.currentTime <= 15 && !showNextOverlay) {
             setShowNextOverlay(true);
           }
@@ -192,7 +226,7 @@ const Watch = () => {
         )}
       </AnimatePresence>
 
-      {/* Center play indicator (when paused) */}
+      {/* Center play indicator */}
       <AnimatePresence>
         {!playing && (
           <motion.button
@@ -212,7 +246,6 @@ const Watch = () => {
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }}
             className="absolute bottom-0 inset-x-0 p-6 z-10"
           >
-            {/* Progress */}
             <div className="flex items-center gap-3 mb-3">
               <span className="text-xs font-mono text-muted-foreground w-12 text-right">
                 {formatTime(((progress / 100) * duration) || 0)}
@@ -226,7 +259,6 @@ const Watch = () => {
               </span>
             </div>
 
-            {/* Buttons */}
             <div className="flex items-center gap-4">
               <button onClick={togglePlay} className="hover:scale-110 transition">
                 {playing ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 fill-foreground" />}
@@ -247,7 +279,6 @@ const Watch = () => {
                 </button>
               )}
 
-              {/* Volume */}
               <div className="flex items-center gap-2 group">
                 <button onClick={toggleMute} className="hover:scale-110 transition">
                   {muted || volume === 0 ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
@@ -257,7 +288,6 @@ const Watch = () => {
                 </div>
               </div>
 
-              {/* Center title */}
               <div className="flex-1 text-center hidden md:block">
                 <span className="text-sm font-medium text-muted-foreground">
                   {item.title} <span className="text-foreground/50">• {item.year}</span>

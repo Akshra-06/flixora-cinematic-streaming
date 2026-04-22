@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, Bell, ChevronDown, User, Settings, HelpCircle, LogOut, Menu, X, Users } from "lucide-react";
+import { Search, Bell, ChevronDown, User, Settings, HelpCircle, LogOut, Menu, X, Users, Heart } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useProfiles } from "@/hooks/useProfiles";
+import { useNotifications } from "@/hooks/useNotifications";
 import {
   Dialog,
   DialogContent,
@@ -29,15 +30,28 @@ const navLinks = [
   { label: "Favorites", to: "/favorites" },
 ];
 
+const timeAgo = (ts: number) => {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+};
+
 export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const [logoutOpen, setLogoutOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { activeProfile, clearActive } = useProfiles();
+  const { items: notifications, unreadCount, markRead, markAllRead } = useNotifications();
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 50);
@@ -48,6 +62,7 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) setProfileOpen(false);
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -62,6 +77,7 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
 
   const profileMenuItems = [
     { icon: Users, label: "Manage Profiles", action: () => navigate("/profiles") },
+    { icon: Heart, label: "My Favorites", action: () => navigate("/favorites") },
     { icon: Settings, label: "Account", action: () => navigate("/account") },
     { icon: HelpCircle, label: "Help Center", action: () => navigate("/help") },
     { icon: LogOut, label: "Sign out of Flixora", action: () => setLogoutOpen(true) },
@@ -119,13 +135,86 @@ export const Navbar = ({ onSearchToggle = () => {} }: NavbarProps) => {
             <Search className="w-5 h-5" />
           </button>
 
-          <button className="p-2 text-muted-foreground hover:text-foreground transition-colors hidden sm:flex relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
-          </button>
+          {/* Notifications */}
+          <div ref={notifRef} className="relative hidden sm:block">
+            <button
+              onClick={() => { setNotifOpen(!notifOpen); setProfileOpen(false); }}
+              className="p-2 text-muted-foreground hover:text-foreground transition-colors relative"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute top-1 right-1 w-4 h-4 bg-primary rounded-full text-[10px] font-bold text-primary-foreground flex items-center justify-center"
+                >
+                  {unreadCount}
+                </motion.span>
+              )}
+            </button>
 
+            <AnimatePresence>
+              {notifOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-full mt-2 w-80 bg-background/95 backdrop-blur-md border border-border rounded-md shadow-[0_8px_40px_rgba(0,0,0,0.6)] overflow-hidden"
+                >
+                  <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+                    <p className="text-sm font-semibold">Notifications</p>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={markAllRead}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">No notifications</p>
+                    ) : (
+                      notifications.map((notif) => (
+                        <button
+                          key={notif.id}
+                          onClick={() => {
+                            markRead(notif.id);
+                            setNotifOpen(false);
+                          }}
+                          className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-secondary/50 transition-colors text-left ${
+                            !notif.read ? "bg-secondary/20" : ""
+                          }`}
+                        >
+                          {notif.image && (
+                            <img
+                              src={notif.image}
+                              alt=""
+                              className="w-14 h-9 rounded object-cover flex-shrink-0 mt-0.5"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-foreground">{notif.title}</p>
+                            <p className="text-xs text-muted-foreground line-clamp-2">{notif.message}</p>
+                            <p className="text-[10px] text-muted-foreground/60 mt-1">{timeAgo(notif.time)}</p>
+                          </div>
+                          {!notif.read && (
+                            <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />
+                          )}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Profile dropdown */}
           <div ref={profileRef} className="relative hidden sm:block">
-            <button onClick={() => setProfileOpen(!profileOpen)} className="flex items-center gap-1.5 group">
+            <button onClick={() => { setProfileOpen(!profileOpen); setNotifOpen(false); }} className="flex items-center gap-1.5 group">
               {avatarNode}
               <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`} />
             </button>

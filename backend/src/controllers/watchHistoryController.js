@@ -49,9 +49,9 @@ exports.addToWatchHistory = async (req, res) => {
 
     return sendSuccess(res, 201, "Added to watch history", user.watchHistory);
   } catch (error) {
-  console.error("WATCH HISTORY ERROR:", error);
-  return sendError(res, 500, error.message);
-}
+    console.error("WATCH HISTORY ERROR:", error);
+    return sendError(res, 500, error.message);
+  }
 };
 
 // Update watch progress

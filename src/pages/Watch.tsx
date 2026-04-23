@@ -27,6 +27,7 @@ const Watch = () => {
   const saveTimer = useRef<ReturnType<typeof setInterval>>();
   const { recordWatch } = useWatchHistory();
   const { getProgress, saveProgress } = usePlaybackProgress();
+  const iframeLoadedRef = useRef(false); // 🔥 ADD HERE
 
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -43,6 +44,7 @@ const Watch = () => {
 
   const [nextItem, setNextItem] = useState<Content | undefined>(undefined);
   const [iframeLoaded, setIframeLoaded] = useState(false); // 🔥 ADD HERE
+  
 
 useEffect(() => {
   if (item) {
@@ -90,10 +92,10 @@ useEffect(() => {
   useEffect(() => {
     if (!trailerUrl) return;
   
-    setIframeLoaded(false);
+    iframeLoadedRef.current = false; // reset
   
     const timer = setTimeout(() => {
-      if (!iframeLoaded) {
+      if (!iframeLoadedRef.current) {
         console.log("Trailer blocked → fallback");
         setUseFallback(true);
       }
@@ -249,7 +251,9 @@ useEffect(() => {
  allow="autoplay; encrypted-media; picture-in-picture"
  allowFullScreen
  className="absolute inset-0 w-full h-full bg-black"
- onLoad={() => setIframeLoaded(true)} // ✅ IMPORTANT
+ onLoad={() => {
+  iframeLoadedRef.current = true; // 🔥 ADD THIS
+}}
 />
 ) : (
   <video

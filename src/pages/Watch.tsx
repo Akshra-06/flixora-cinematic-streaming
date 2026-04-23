@@ -45,7 +45,7 @@ const Watch = () => {
   const [nextItem, setNextItem] = useState<Content | undefined>(undefined);
   // const [iframeLoaded, setIframeLoaded] = useState(false); // 🔥 ADD HERE
   
-
+  const lastSavedRef = useRef(0);
 useEffect(() => {
   if (item) {
     setNextItem(getNextEpisode(item));
@@ -291,7 +291,24 @@ useEffect(() => {
     
       if (v.duration && remaining <= 2 && !showNextOverlay) {
         setShowNextOverlay(true);
-        setNextCountdown(2); // 🔥 important
+        setNextCountdown(2);
+      }
+    
+      // 🔥 SAVE PROGRESS EVERY 5 SECONDS
+      if (v.currentTime - lastSavedRef.current >= 5) {
+        lastSavedRef.current = v.currentTime;
+    
+        fetch("https://flixora-cinematic-streaming.onrender.com/api/watch", {
+          method: "POST",
+          body: JSON.stringify({
+            movieId: item.id,
+            title: item.title,
+            thumbnail: item.image,
+            genre: item.genre,
+            progress: v.currentTime,
+            duration: v.duration,
+          }),
+        });
       }
     }}
     onEnded={() => {

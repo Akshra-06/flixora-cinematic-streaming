@@ -38,8 +38,19 @@ const watchHistorySchema = new mongoose.Schema(
     },
     progress: {
       type: Number,
-      default: 0, // in seconds
+      default: 0, // seconds watched
     },
+    duration: {
+      type: Number,
+      default: 0,
+    },
+    completed: {
+      type: Boolean,
+      default: false,
+    },
+    genre: {
+      type: String,
+    }, // 🔥 needed for recommendations
   },
   { timestamps: false },
 );

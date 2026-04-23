@@ -13,13 +13,16 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const reactionRoutes = require("./routes/reactionRoutes");
 
 const app = express();
+connectDB();
 
 // ✅ CORS (single, clean config)
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 
 // ✅ Preflight support (important for Render/Vercel)
 app.options("*", cors());

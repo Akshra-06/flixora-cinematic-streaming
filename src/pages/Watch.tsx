@@ -43,7 +43,7 @@ const Watch = () => {
   const [trailerLoading, setTrailerLoading] = useState(false);
 
   const [nextItem, setNextItem] = useState<Content | undefined>(undefined);
-  const [iframeLoaded, setIframeLoaded] = useState(false); // 🔥 ADD HERE
+  // const [iframeLoaded, setIframeLoaded] = useState(false); // 🔥 ADD HERE
   
 
 useEffect(() => {
@@ -92,14 +92,14 @@ useEffect(() => {
   useEffect(() => {
     if (!trailerUrl) return;
   
-    iframeLoadedRef.current = false; // reset
+    iframeLoadedRef.current = false;
   
     const timer = setTimeout(() => {
       if (!iframeLoadedRef.current) {
         console.log("Trailer blocked → fallback");
         setUseFallback(true);
       }
-    }, 2500);
+    }, 3000); // slightly safer
   
     return () => clearTimeout(timer);
   }, [trailerUrl]);
@@ -252,7 +252,16 @@ useEffect(() => {
  allowFullScreen
  className="absolute inset-0 w-full h-full bg-black"
  onLoad={() => {
-  iframeLoadedRef.current = true; // 🔥 ADD THIS
+  // delay check after load
+  setTimeout(() => {
+    const iframe = document.querySelector("iframe");
+
+    if (iframe && iframe.clientHeight > 0) {
+      iframeLoadedRef.current = true;
+    } else {
+      setUseFallback(true);
+    }
+  }, 800);
 }}
 />
 ) : (

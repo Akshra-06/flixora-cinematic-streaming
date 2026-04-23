@@ -5,24 +5,21 @@ let isConnected = false;
 const connectDB = async () => {
   if (isConnected) {
     console.log("Using existing MongoDB connection");
-    return mongoose.connection;
+    return;
   }
 
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
+    console.log("⏳ Connecting to MongoDB...");
+
+    await mongoose.connect(process.env.MONGODB_URI, {
       maxPoolSize: 5,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 15000, // 🔥 increased
     });
 
     isConnected = true;
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-    return conn;
+    console.log("✅ MongoDB Connected");
   } catch (error) {
-    console.error(`Error connecting to MongoDB: ${error.message}`);
-    isConnected = false;
-    throw error;
+    console.error("❌ MongoDB connection error:", error.message);
   }
 };
 

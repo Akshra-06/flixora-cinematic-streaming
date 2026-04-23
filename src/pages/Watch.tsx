@@ -42,6 +42,7 @@ const Watch = () => {
   const [trailerLoading, setTrailerLoading] = useState(false);
 
   const [nextItem, setNextItem] = useState<Content | undefined>(undefined);
+  const [iframeLoaded, setIframeLoaded] = useState(false); // 🔥 ADD HERE
 
 useEffect(() => {
   if (item) {
@@ -85,6 +86,21 @@ useEffect(() => {
     };
     fetchTrailer();
   }, [item?.tmdbId, item?.type]);
+
+  useEffect(() => {
+    if (!trailerUrl) return;
+  
+    setIframeLoaded(false);
+  
+    const timer = setTimeout(() => {
+      if (!iframeLoaded) {
+        console.log("Trailer blocked → fallback");
+        setUseFallback(true);
+      }
+    }, 2500);
+  
+    return () => clearTimeout(timer);
+  }, [trailerUrl]);
 
   // Record watch + resume from saved progress
   useEffect(() => {
@@ -227,13 +243,13 @@ useEffect(() => {
       onClick={(e) => { if (e.target === e.currentTarget) togglePlay(); }}
     >
       {!useFallback && trailerUrl ? (
-  <iframe
-  src={trailerUrl}
-  title={`${item.title} trailer`}
-  allow="autoplay; encrypted-media; picture-in-picture"
-  allowFullScreen
-  className="absolute inset-0 w-full h-full bg-black"
-  onError={() => setUseFallback(true)} // 🔥 ADD THIS
+ <iframe
+ src={trailerUrl}
+ title={`${item.title} trailer`}
+ allow="autoplay; encrypted-media; picture-in-picture"
+ allowFullScreen
+ className="absolute inset-0 w-full h-full bg-black"
+ onLoad={() => setIframeLoaded(true)} // ✅ IMPORTANT
 />
 ) : (
   <video

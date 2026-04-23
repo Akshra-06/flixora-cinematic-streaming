@@ -5,7 +5,7 @@ const { sendError } = require("../utils/response");
 const authenticate = async (req, res, next) => {
   try {
     const token = req.headers.authorization?.split(" ")[1];
-
+    console.log("DECODED TOKEN:", decoded);
     if (!token) {
       return sendError(res, 401, "No token provided. Please log in.");
     }
@@ -23,7 +23,7 @@ const authenticate = async (req, res, next) => {
     }
 
     req.user = user;
-    req.userId = decoded.userId;
+    req.userId = decoded.id;
     next();
   } catch (error) {
     return sendError(res, 500, `Authentication error: ${error.message}`);

@@ -15,18 +15,10 @@ const reactionRoutes = require("./routes/reactionRoutes");
 // Initialize Express app
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// CORS configuration
-const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "http://localhost:8080",
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: "*"
+}));
 
 // Note: MongoDB connection will be established on first database query
 // This prevents serverless function crashes on startup

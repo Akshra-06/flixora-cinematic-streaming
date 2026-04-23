@@ -3,7 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 
-// Import routes
+// Routes
 const userRoutes = require("./routes/userRoutes");
 const movieRoutes = require("./routes/movieRoutes");
 const myListRoutes = require("./routes/myListRoutes");
@@ -12,27 +12,23 @@ const watchHistoryRoutes = require("./routes/watchHistoryRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const reactionRoutes = require("./routes/reactionRoutes");
 
-// Initialize Express app
 const app = express();
 
-
+// ✅ CORS (single, clean config)
 app.use(cors({
-  origin: [
-    "https://flixora-cinematic-project.vercel.app",
-    "http://localhost:8080"
-  ],
+  origin: "*",
   methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// ✅ ADD THIS BACK
+// ✅ Preflight support (important for Render/Vercel)
+app.options("*", cors());
+
+// ✅ Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Note: MongoDB connection will be established on first database query
-// This prevents serverless function crashes on startup
-
-// API Routes
+// Routes
 app.use("/api/users", userRoutes);
 app.use("/api/movies", movieRoutes);
 app.use("/api/my-list", myListRoutes);
@@ -41,22 +37,21 @@ app.use("/api/watch-history", watchHistoryRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/reactions", reactionRoutes);
 
-// Health check endpoint
+// Health
 app.get("/api/health", (req, res) => {
   res.json({ message: "Flixora backend is running" });
 });
 
-// Error handling middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,
     message: "Something went wrong",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
   });
 });
 
-// 404 handler
+// 404
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -64,15 +59,13 @@ app.use((req, res) => {
   });
 });
 
-// Export for Vercel serverless
 module.exports = app;
 
-// Start server (for local development)
+// Local run
 if (require.main === module) {
   const PORT = process.env.PORT || 5001;
 
   app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(`Server running on port ${PORT}`);
   });
 }

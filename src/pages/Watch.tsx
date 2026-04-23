@@ -244,7 +244,7 @@ useEffect(() => {
       onMouseMove={bumpControls}
       onClick={(e) => { if (e.target === e.currentTarget) togglePlay(); }}
     >
-      {!useFallback && trailerUrl ? (
+     {false && trailerUrl ?  (
  <iframe
  src={trailerUrl}
  title={`${item.title} trailer`}
@@ -297,7 +297,7 @@ useEffect(() => {
       if (v.currentTime - lastSavedRef.current >= 5) {
         lastSavedRef.current = v.currentTime;
     
-        fetch("https://flixora-cinematic-streaming.onrender.com/api/watch", {
+        fetch("https://flixora-cinematic-streaming.onrender.com/api/watch-history", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

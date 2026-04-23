@@ -61,23 +61,28 @@ useEffect(() => {
         const mediaType = item.type === "tv" ? "tv" : "movie";
       
         const response = await fetch(
-          `http://localhost:5001/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`
+          `https://flixora-cinematic-streaming.onrender.com/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`
         );
       
         const payload = await response.json();
+      
+        console.log("TRAILER RESPONSE:", payload); // 🔥 ADD THIS
       
         if (response.ok && payload?.data?.youtubeEmbedUrl) {
           setTrailerUrl(payload.data.youtubeEmbedUrl);
           setUseFallback(false);
         } else {
           setTrailerUrl(null);
-          setUseFallback(true); // 🔥 fallback immediately
+          setUseFallback(true);
         }
+        
+        setTrailerLoading(false); // ✅ ALWAYS RUN
       } catch (error) {
         console.error("Trailer fetch failed:", error);
         setTrailerUrl(null);
-        setUseFallback(true); // 🔥 fallback immediately
-      }};
+        setUseFallback(true);
+      }
+    };
     fetchTrailer();
   }, [item?.tmdbId, item?.type]);
 
@@ -223,12 +228,13 @@ useEffect(() => {
     >
       {!useFallback && trailerUrl ? (
   <iframe
-    src={trailerUrl}
-    title={`${item.title} trailer`}
-    allow="autoplay; encrypted-media; picture-in-picture"
-    allowFullScreen
-    className="absolute inset-0 w-full h-full bg-black"
-  />
+  src={trailerUrl}
+  title={`${item.title} trailer`}
+  allow="autoplay; encrypted-media; picture-in-picture"
+  allowFullScreen
+  className="absolute inset-0 w-full h-full bg-black"
+  onError={() => setUseFallback(true)} // 🔥 ADD THIS
+/>
 ) : (
   <video
   key={item.id}   // 🔥 VERY IMPORTANT
@@ -279,7 +285,7 @@ useEffect(() => {
         )}
       </AnimatePresence>
 
-      {trailerLoading && !useFallback && (
+      {trailerLoading && !useFallback && !trailerUrl && (
         <div className="absolute top-24 right-6 z-20 text-xs px-3 py-1.5 rounded-full bg-background/50 border border-border/60 backdrop-blur-sm">
           Loading trailer...
         </div>

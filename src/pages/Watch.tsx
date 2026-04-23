@@ -281,6 +281,8 @@ useEffect(() => {
       }
     }}
     onTimeUpdate={(e) => {
+      if (!useFallback) return; // 🚨 VERY IMPORTANT
+    
       const v = e.currentTarget;
     
       setProgress((v.currentTime / (v.duration || 1)) * 100);
@@ -292,7 +294,6 @@ useEffect(() => {
         setNextCountdown(2);
       }
     
-      // 🔥 SAVE PROGRESS
       if (v.currentTime - lastSavedRef.current >= 5) {
         lastSavedRef.current = v.currentTime;
     

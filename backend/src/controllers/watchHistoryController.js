@@ -49,11 +49,7 @@ exports.addToWatchHistory = async (req, res) => {
 
     return sendSuccess(res, 201, "Added to watch history", user.watchHistory);
   } catch (error) {
-    return sendError(
-      res,
-      500,
-      `Error adding to watch history: ${error.message}`,
-    );
+    console.error("WATCH HISTORY ERROR:", error);
   }
 };
 

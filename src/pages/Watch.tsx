@@ -283,8 +283,6 @@ useEffect(() => {
     onTimeUpdate={(e) => {
       const v = e.currentTarget;
     
-      if (v.paused) return;
-    
       setProgress((v.currentTime / (v.duration || 1)) * 100);
     
       const remaining = v.duration - v.currentTime;
@@ -294,12 +292,16 @@ useEffect(() => {
         setNextCountdown(2);
       }
     
-      // 🔥 SAVE PROGRESS EVERY 5 SECONDS
+      // 🔥 SAVE PROGRESS
       if (v.currentTime - lastSavedRef.current >= 5) {
         lastSavedRef.current = v.currentTime;
     
         fetch("https://flixora-cinematic-streaming.onrender.com/api/watch", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
           body: JSON.stringify({
             movieId: item.id,
             title: item.title,

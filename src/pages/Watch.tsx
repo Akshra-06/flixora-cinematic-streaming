@@ -18,6 +18,7 @@ import { Slider } from "@/components/ui/slider";
 import { getById, getNextEpisode, type Content } from "@/data/movies";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
+import { authFetch } from "@/lib/authFetch";
 
 const formatTime = (s: number) => {
   if (!isFinite(s)) return "0:00";
@@ -74,7 +75,7 @@ const Watch = () => {
       try {
         const mediaType = item.type === "tv" ? "tv" : "movie";
 
-        const response = await fetch(
+        const response = await authFetch(
           `https://flixora-cinematic-streaming.onrender.com/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`,
         );
 
@@ -310,11 +311,14 @@ const Watch = () => {
 
             if (v.paused) return;
 
-            const progress = v.currentTime;
-            const duration = v.duration;
+            const now = Date.now();
 
-            // 🔥 SAVE TO BACKEND
-            await fetch(
+            // 🚨 SAVE ONLY EVERY 5 SECONDS
+            if (now - lastSavedRef.current < 5000) return;
+
+            lastSavedRef.current = now;
+
+            await authFetch(
               "https://flixora-cinematic-streaming.onrender.com/api/watch-history",
               {
                 method: "POST",
@@ -322,8 +326,9 @@ const Watch = () => {
                   movieId: item.id,
                   title: item.title,
                   thumbnail: item.image,
-                  progress,
-                  duration,
+                  genre: item.genre || "General",
+                  progress: v.currentTime,
+                  duration: v.duration,
                 }),
               },
             );

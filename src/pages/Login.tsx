@@ -26,6 +26,7 @@ export default function Login() {
 
       localStorage.setItem("token", data.token);
       window.location.href = "/";
+      console.log("LOGIN RESPONSE:", data);
     } catch (err) {
       console.error(err);
       alert("Something went wrong");

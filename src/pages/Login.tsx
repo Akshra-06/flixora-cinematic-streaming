@@ -24,12 +24,7 @@ export default function Login() {
         return;
       }
 
-      // 🔥 SAVE TOKEN
       localStorage.setItem("token", data.token);
-
-      alert("Login successful");
-
-      // redirect
       window.location.href = "/";
     } catch (err) {
       console.error(err);
@@ -38,29 +33,9 @@ export default function Login() {
   };
 
   return (
-    <div style={{ padding: "40px", color: "white" }}>
-      <h2>Login</h2>
-
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <br />
-      <br />
-
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <br />
-      <br />
-
+    <div>
+      <input value={email} onChange={(e) => setEmail(e.target.value)} />
+      <input value={password} onChange={(e) => setPassword(e.target.value)} />
       <button onClick={handleLogin}>Login</button>
     </div>
   );

@@ -4,7 +4,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 // Add to watch history
 exports.addToWatchHistory = async (req, res) => {
   try {
-    const { movieId, title, thumbnail, progress } = req.body;
+    const { movieId, title, thumbnail, progress, duration } = req.body;
 
     if (!movieId || !title) {
       return sendError(res, 400, "Please provide movieId and title");
@@ -33,6 +33,7 @@ exports.addToWatchHistory = async (req, res) => {
         title,
         thumbnail,
         progress: progress || 0,
+        duration: duration || 0,
       });
     }
 

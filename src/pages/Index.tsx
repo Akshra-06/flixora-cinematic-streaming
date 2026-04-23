@@ -4,13 +4,20 @@ import { HeroBanner } from "@/components/HeroBanner";
 import { ContentRow } from "@/components/ContentRow";
 import { Footer } from "@/components/Footer";
 import { SmartSearch } from "@/components/SmartSearch";
-import { trendingMovies, topRated, actionMovies, comedyMovies, recentlyAdded } from "@/data/movies";
+import {
+  trendingMovies,
+  topRated,
+  actionMovies,
+  comedyMovies,
+  recentlyAdded,
+} from "@/data/movies";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { useReactions } from "@/hooks/useReactions";
-const [continueWatching, setContinueWatching] = useState([]);
+
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
-  const { recentlyWatched, forYou, becauseYouWatched, topGenres } = useWatchHistory();
+  const { recentlyWatched, forYou, becauseYouWatched, topGenres } =
+    useWatchHistory();
   const { liked, favorites } = useReactions();
 
   return (
@@ -26,7 +33,11 @@ const Index = () => {
 
         {forYou.length > 0 && (
           <ContentRow
-            title={topGenres[0] ? `Top Picks for You · ${topGenres[0]}` : "Top Picks for You"}
+            title={
+              topGenres[0]
+                ? `Top Picks for You · ${topGenres[0]}`
+                : "Top Picks for You"
+            }
             movies={forYou}
           />
         )}

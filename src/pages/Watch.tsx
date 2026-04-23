@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  Play, Pause, Volume2, VolumeX, Maximize, Minimize,
-  ArrowLeft, SkipForward, Settings, Rewind, FastForward,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Maximize,
+  Minimize,
+  ArrowLeft,
+  SkipForward,
+  Settings,
+  Rewind,
+  FastForward,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Slider } from "@/components/ui/slider";
@@ -13,7 +22,9 @@ import { usePlaybackProgress } from "@/hooks/usePlaybackProgress";
 const formatTime = (s: number) => {
   if (!isFinite(s)) return "0:00";
   const m = Math.floor(s / 60);
-  const sec = Math.floor(s % 60).toString().padStart(2, "0");
+  const sec = Math.floor(s % 60)
+    .toString()
+    .padStart(2, "0");
   return `${m}:${sec}`;
 };
 
@@ -44,13 +55,13 @@ const Watch = () => {
 
   const [nextItem, setNextItem] = useState<Content | undefined>(undefined);
   // const [iframeLoaded, setIframeLoaded] = useState(false); // 🔥 ADD HERE
-  
+
   const lastSavedRef = useRef(0);
-useEffect(() => {
-  if (item) {
-    setNextItem(getNextEpisode(item));
-  }
-}, [item]);
+  useEffect(() => {
+    if (item) {
+      setNextItem(getNextEpisode(item));
+    }
+  }, [item]);
 
   useEffect(() => {
     const fetchTrailer = async () => {
@@ -62,15 +73,15 @@ useEffect(() => {
       setTrailerLoading(true);
       try {
         const mediaType = item.type === "tv" ? "tv" : "movie";
-      
+
         const response = await fetch(
-          `https://flixora-cinematic-streaming.onrender.com/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`
+          `https://flixora-cinematic-streaming.onrender.com/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`,
         );
-      
+
         const payload = await response.json();
-      
+
         console.log("TRAILER RESPONSE:", payload); // 🔥 ADD THIS
-      
+
         if (response.ok && payload?.data?.youtubeEmbedUrl) {
           setTrailerUrl(payload.data.youtubeEmbedUrl);
           setUseFallback(false);
@@ -78,7 +89,7 @@ useEffect(() => {
           setTrailerUrl(null);
           setUseFallback(true);
         }
-        
+
         setTrailerLoading(false); // ✅ ALWAYS RUN
       } catch (error) {
         console.error("Trailer fetch failed:", error);
@@ -91,16 +102,16 @@ useEffect(() => {
 
   useEffect(() => {
     if (!trailerUrl) return;
-  
+
     iframeLoadedRef.current = false;
-  
+
     const timer = setTimeout(() => {
       if (!iframeLoadedRef.current) {
         console.log("Trailer blocked → fallback");
         setUseFallback(true);
       }
     }, 3000); // slightly safer
-  
+
     return () => clearTimeout(timer);
   }, [trailerUrl]);
 
@@ -148,7 +159,9 @@ useEffect(() => {
 
   useEffect(() => {
     bumpControls();
-    return () => { if (hideTimer.current) clearTimeout(hideTimer.current); };
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
   }, [bumpControls]);
 
   useEffect(() => {
@@ -159,7 +172,10 @@ useEffect(() => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === " " || e.key.toLowerCase() === "k") { e.preventDefault(); togglePlay(); }
+      if (e.key === " " || e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        togglePlay();
+      }
       if (e.key.toLowerCase() === "m") toggleMute();
       if (e.key.toLowerCase() === "f") toggleFullscreen();
       if (e.key === "ArrowRight") seek(10);
@@ -173,17 +189,16 @@ useEffect(() => {
 
   useEffect(() => {
     if (!videoRef.current || videoRef.current.paused) return;
-  
+
     if (showNextOverlay && nextCountdown > 0) {
-      const t = setTimeout(() => setNextCountdown(c => c - 1), 1000);
+      const t = setTimeout(() => setNextCountdown((c) => c - 1), 1000);
       return () => clearTimeout(t);
     }
-  
+
     if (showNextOverlay && nextCountdown === 0 && nextItem) {
       navigate(`/watch/${nextItem.id}`);
     }
   }, [showNextOverlay, nextCountdown, nextItem]);
-      
 
   if (!item) {
     return (
@@ -196,7 +211,7 @@ useEffect(() => {
   const togglePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-  
+
     if (video.paused) {
       video.play();
       setPlaying(true);
@@ -206,35 +221,43 @@ useEffect(() => {
     }
   };
   const toggleMute = () => {
-    const v = videoRef.current; if (!v) return;
-    v.muted = !v.muted; setMuted(v.muted);
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+    setMuted(v.muted);
   };
   const toggleFullscreen = async () => {
     if (!containerRef.current) return;
-    if (!document.fullscreenElement) await containerRef.current.requestFullscreen();
+    if (!document.fullscreenElement)
+      await containerRef.current.requestFullscreen();
     else await document.exitFullscreen();
   };
   const seek = (sec: number) => {
-    const v = videoRef.current; if (!v) return;
+    const v = videoRef.current;
+    if (!v) return;
     v.currentTime = Math.min(Math.max(0, v.currentTime + sec), v.duration || 0);
   };
   const onScrub = (val: number[]) => {
-    const v = videoRef.current; if (!v || !duration) return;
+    const v = videoRef.current;
+    if (!v || !duration) return;
     v.currentTime = (val[0] / 100) * duration;
     setProgress(val[0]);
   };
   const onVolume = (val: number[]) => {
-    const v = videoRef.current; if (!v) return;
+    const v = videoRef.current;
+    if (!v) return;
     const nv = val[0] / 100;
-    v.volume = nv; v.muted = nv === 0;
-    setVolume(nv); setMuted(nv === 0);
+    v.volume = nv;
+    v.muted = nv === 0;
+    setVolume(nv);
+    setMuted(nv === 0);
   };
   const [useFallback, setUseFallback] = useState(false);
 
-// Reset fallback when movie changes
-useEffect(() => {
-  setUseFallback(false);
-}, [item?.id]);
+  // Reset fallback when movie changes
+  useEffect(() => {
+    setUseFallback(false);
+  }, [item?.id]);
 
   return (
     <div
@@ -242,93 +265,84 @@ useEffect(() => {
       className="relative h-screen w-screen bg-black overflow-hidden"
       style={{ cursor: showControls ? "default" : "none" }}
       onMouseMove={bumpControls}
-      onClick={(e) => { if (e.target === e.currentTarget) togglePlay(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) togglePlay();
+      }}
     >
-     {false && trailerUrl ?  (
- <iframe
- src={trailerUrl}
- title={`${item.title} trailer`}
- allow="autoplay; encrypted-media; picture-in-picture"
- allowFullScreen
- className="absolute inset-0 w-full h-full bg-black"
- onLoad={() => {
-  // delay check after load
-  setTimeout(() => {
-    const iframe = document.querySelector("iframe");
+      {false && trailerUrl ? (
+        <iframe
+          src={trailerUrl}
+          title={`${item.title} trailer`}
+          allow="autoplay; encrypted-media; picture-in-picture"
+          allowFullScreen
+          className="absolute inset-0 w-full h-full bg-black"
+          onLoad={() => {
+            // delay check after load
+            setTimeout(() => {
+              const iframe = document.querySelector("iframe");
 
-    if (iframe && iframe.clientHeight > 0) {
-      iframeLoadedRef.current = true;
-    } else {
-      setUseFallback(true);
-    }
-  }, 800);
-}}
-/>
-) : (
-  <video
-  key={item.id}   // 🔥 VERY IMPORTANT
-  ref={videoRef}
-  src={item.videoUrl}
-    autoPlay
-    muted
-    className="absolute inset-0 w-full h-full object-contain bg-black"
-    onClick={togglePlay}
-    onLoadedMetadata={(e) => {
-      setDuration(e.currentTarget.duration);
-      if (item) {
-        const saved = getProgress(item.id);
-        if (saved) e.currentTarget.currentTime = saved.time;
-      }
-    }}
-    onTimeUpdate={(e) => {
-      if (!useFallback) return; // 🚨 VERY IMPORTANT
-    
-      const v = e.currentTarget;
-    
-      setProgress((v.currentTime / (v.duration || 1)) * 100);
-    
-      const remaining = v.duration - v.currentTime;
-    
-      if (v.duration && remaining <= 2 && !showNextOverlay) {
-        setShowNextOverlay(true);
-        setNextCountdown(2);
-      }
-    
-      if (v.currentTime - lastSavedRef.current >= 5) {
-        lastSavedRef.current = v.currentTime;
-    
-        fetch("https://flixora-cinematic-streaming.onrender.com/api/watch-history", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-          body: JSON.stringify({
-            movieId: item.id,
-            title: item.title,
-            thumbnail: item.image,
-            genre: item.genre,
-            progress: v.currentTime,
-            duration: v.duration,
-          }),
-        });
-      }
-    }}
-    onEnded={() => {
-      if (!videoRef.current?.paused && nextItem) {
-        navigate(`/watch/${nextItem.id}`);
-      }
-    }}
-    
-    
-  />
-)}
+              if (iframe && iframe.clientHeight > 0) {
+                iframeLoadedRef.current = true;
+              } else {
+                setUseFallback(true);
+              }
+            }, 800);
+          }}
+        />
+      ) : (
+        <video
+          key={item.id} // 🔥 VERY IMPORTANT
+          ref={videoRef}
+          src={item.videoUrl}
+          autoPlay
+          muted
+          className="absolute inset-0 w-full h-full object-contain bg-black"
+          onClick={togglePlay}
+          onLoadedMetadata={(e) => {
+            setDuration(e.currentTarget.duration);
+            if (item) {
+              const saved = getProgress(item.id);
+              if (saved) e.currentTarget.currentTime = saved.time;
+            }
+          }}
+          onTimeUpdate={async (e) => {
+            const v = e.currentTarget;
+
+            if (v.paused) return;
+
+            const progress = v.currentTime;
+            const duration = v.duration;
+
+            // 🔥 SAVE TO BACKEND
+            await fetch(
+              "https://flixora-cinematic-streaming.onrender.com/api/watch-history",
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  movieId: item.id,
+                  title: item.title,
+                  thumbnail: item.image,
+                  progress,
+                  duration,
+                }),
+              },
+            );
+          }}
+          onEnded={() => {
+            if (!videoRef.current?.paused && nextItem) {
+              navigate(`/watch/${nextItem.id}`);
+            }
+          }}
+        />
+      )}
 
       {/* Top gradient */}
       <AnimatePresence>
-        {showControls && (useFallback || !trailerUrl) &&  (
+        {showControls && (useFallback || !trailerUrl) && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             className="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/80 via-transparent to-black/90"
           />
         )}
@@ -344,7 +358,9 @@ useEffect(() => {
       <AnimatePresence>
         {showControls && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
             className="absolute top-0 inset-x-0 p-6 flex items-center gap-4 z-10"
           >
             <button
@@ -357,7 +373,9 @@ useEffect(() => {
               <span className="text-xs text-muted-foreground uppercase tracking-widest">
                 {item.type === "tv" ? "Now Watching • Episode" : "Now Watching"}
               </span>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight">{item.title}</h1>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight">
+                {item.title}
+              </h1>
             </div>
           </motion.div>
         )}
@@ -367,7 +385,9 @@ useEffect(() => {
       <AnimatePresence>
         {!playing && (
           <motion.button
-            initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }}
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.6, opacity: 0 }}
             onClick={togglePlay}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-primary flex items-center justify-center neon-glow z-10"
           >
@@ -380,30 +400,50 @@ useEffect(() => {
       <AnimatePresence>
         {showControls && (
           <motion.div
-            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
             className="absolute bottom-0 inset-x-0 p-6 z-10"
           >
             <div className="flex items-center gap-3 mb-3">
               <span className="text-xs font-mono text-muted-foreground w-12 text-right">
-                {formatTime(((progress / 100) * duration) || 0)}
+                {formatTime((progress / 100) * duration || 0)}
               </span>
               <Slider
-                value={[progress]} max={100} step={0.1} onValueChange={onScrub}
+                value={[progress]}
+                max={100}
+                step={0.1}
+                onValueChange={onScrub}
                 className="flex-1 [&_[role=slider]]:bg-primary [&_[role=slider]]:border-primary [&_.bg-primary]:bg-primary"
               />
               <span className="text-xs font-mono text-muted-foreground w-12">
-                -{formatTime(duration - ((progress / 100) * duration) || 0)}
+                -{formatTime(duration - (progress / 100) * duration || 0)}
               </span>
             </div>
 
             <div className="flex items-center gap-4">
-              <button onClick={togglePlay} className="hover:scale-110 transition">
-                {playing ? <Pause className="w-7 h-7" /> : <Play className="w-7 h-7 fill-foreground" />}
+              <button
+                onClick={togglePlay}
+                className="hover:scale-110 transition"
+              >
+                {playing ? (
+                  <Pause className="w-7 h-7" />
+                ) : (
+                  <Play className="w-7 h-7 fill-foreground" />
+                )}
               </button>
-              <button onClick={() => seek(-10)} className="hover:scale-110 transition" aria-label="Rewind 10s">
+              <button
+                onClick={() => seek(-10)}
+                className="hover:scale-110 transition"
+                aria-label="Rewind 10s"
+              >
                 <Rewind className="w-6 h-6" />
               </button>
-              <button onClick={() => seek(10)} className="hover:scale-110 transition" aria-label="Forward 10s">
+              <button
+                onClick={() => seek(10)}
+                className="hover:scale-110 transition"
+                aria-label="Forward 10s"
+              >
                 <FastForward className="w-6 h-6" />
               </button>
               {nextItem && (
@@ -417,25 +457,48 @@ useEffect(() => {
               )}
 
               <div className="flex items-center gap-2 group">
-                <button onClick={toggleMute} className="hover:scale-110 transition">
-                  {muted || volume === 0 ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+                <button
+                  onClick={toggleMute}
+                  className="hover:scale-110 transition"
+                >
+                  {muted || volume === 0 ? (
+                    <VolumeX className="w-6 h-6" />
+                  ) : (
+                    <Volume2 className="w-6 h-6" />
+                  )}
                 </button>
                 <div className="w-0 group-hover:w-24 overflow-hidden transition-all duration-300">
-                  <Slider value={[muted ? 0 : volume * 100]} max={100} onValueChange={onVolume} />
+                  <Slider
+                    value={[muted ? 0 : volume * 100]}
+                    max={100}
+                    onValueChange={onVolume}
+                  />
                 </div>
               </div>
 
               <div className="flex-1 text-center hidden md:block">
                 <span className="text-sm font-medium text-muted-foreground">
-                  {item.title} <span className="text-foreground/50">• {item.year}</span>
+                  {item.title}{" "}
+                  <span className="text-foreground/50">• {item.year}</span>
                 </span>
               </div>
 
-              <button className="hover:scale-110 transition" aria-label="Settings">
+              <button
+                className="hover:scale-110 transition"
+                aria-label="Settings"
+              >
                 <Settings className="w-6 h-6" />
               </button>
-              <button onClick={toggleFullscreen} className="hover:scale-110 transition" aria-label="Fullscreen">
-                {fullscreen ? <Minimize className="w-6 h-6" /> : <Maximize className="w-6 h-6" />}
+              <button
+                onClick={toggleFullscreen}
+                className="hover:scale-110 transition"
+                aria-label="Fullscreen"
+              >
+                {fullscreen ? (
+                  <Minimize className="w-6 h-6" />
+                ) : (
+                  <Maximize className="w-6 h-6" />
+                )}
               </button>
             </div>
           </motion.div>
@@ -444,29 +507,37 @@ useEffect(() => {
 
       {/* Next-up overlay */}
       <AnimatePresence>
-      {showNextOverlay && nextItem && (
+        {showNextOverlay && nextItem && (
           <motion.div
-            initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 60 }}
+            initial={{ opacity: 0, x: 60 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 60 }}
             className="absolute bottom-32 right-6 w-80 bg-card/90 backdrop-blur-md border border-border rounded-lg overflow-hidden shadow-2xl z-20"
           >
             <div className="relative aspect-video">
-              <img src={nextItem.image} alt={nextItem.title} className="w-full h-full object-cover" />
+              <img
+                src={nextItem.image}
+                alt={nextItem.title}
+                className="w-full h-full object-cover"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-card to-transparent" />
             </div>
             <div className="p-4">
-              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Up Next in {nextCountdown}s</p>
+              <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">
+                Up Next in {nextCountdown}s
+              </p>
               <h3 className="font-bold text-lg mb-3">{nextItem.title}</h3>
               <div className="flex gap-2">
-              <button
-  onClick={() => {
-    setShowNextOverlay(false);   // 🔥 reset overlay
-    setNextCountdown(2);         // 🔥 reset countdown
-    navigate(`/watch/${nextItem.id}`);
-  }}
-  className="flex-1 bg-primary text-primary-foreground py-2 rounded font-semibold hover:bg-primary/90 transition flex items-center justify-center gap-2"
->
-  <Play className="w-4 h-4 fill-primary-foreground" /> Play Now
-</button>
+                <button
+                  onClick={() => {
+                    setShowNextOverlay(false); // 🔥 reset overlay
+                    setNextCountdown(2); // 🔥 reset countdown
+                    navigate(`/watch/${nextItem.id}`);
+                  }}
+                  className="flex-1 bg-primary text-primary-foreground py-2 rounded font-semibold hover:bg-primary/90 transition flex items-center justify-center gap-2"
+                >
+                  <Play className="w-4 h-4 fill-primary-foreground" /> Play Now
+                </button>
                 <button
                   onClick={() => setShowNextOverlay(false)}
                   className="px-3 py-2 rounded border border-border hover:bg-secondary transition text-sm"

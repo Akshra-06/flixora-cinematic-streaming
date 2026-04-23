@@ -4,7 +4,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 // Add to watch history
 exports.addToWatchHistory = async (req, res) => {
   try {
-    const { movieId, title, thumbnail, progress, duration } = req.body;
+    const { movieId, title, thumbnail, progress, duration, genre } = req.body;
 
     if (!movieId || !title) {
       return sendError(res, 400, "Please provide movieId and title");
@@ -15,28 +15,36 @@ exports.addToWatchHistory = async (req, res) => {
       return sendError(res, 404, "User not found");
     }
 
-    // Check if movie is already in watch history
     const existingIndex = user.watchHistory.findIndex(
       (item) => item.movieId === movieId,
     );
 
     if (existingIndex > -1) {
-      // Update existing entry
-      user.watchHistory[existingIndex].watchedAt = new Date();
-      if (progress !== undefined) {
-        user.watchHistory[existingIndex].progress = progress;
-      }
+      // 🔄 UPDATE EXISTING
+      const item = user.watchHistory[existingIndex];
+
+      item.watchedAt = new Date();
+
+      if (progress !== undefined) item.progress = progress;
+      if (duration !== undefined) item.duration = duration;
+
+      item.completed = item.duration > 0 && item.progress >= item.duration - 5;
+
+      if (genre) item.genre = genre;
     } else {
-      // Add new entry
+      // ➕ ADD NEW
       user.watchHistory.push({
         movieId,
         title,
         thumbnail,
         progress: progress || 0,
         duration: duration || 0,
+        completed: duration && progress >= duration - 5 ? true : false,
+        genre: genre || "",
       });
     }
 
+    // ✅ ALWAYS SAVE
     await user.save();
 
     return sendSuccess(res, 201, "Added to watch history", user.watchHistory);
@@ -53,7 +61,7 @@ exports.addToWatchHistory = async (req, res) => {
 exports.updateWatchProgress = async (req, res) => {
   try {
     const { movieId } = req.params;
-    const { progress } = req.body;
+    const { progress, duration } = req.body;
 
     if (progress === undefined) {
       return sendError(res, 400, "Please provide progress");
@@ -71,6 +79,13 @@ exports.updateWatchProgress = async (req, res) => {
 
     item.progress = progress;
     item.watchedAt = new Date();
+
+    if (duration !== undefined) {
+      item.duration = duration;
+    }
+
+    item.completed = item.duration > 0 && item.progress >= item.duration - 5;
+
     await user.save();
 
     return sendSuccess(res, 200, "Watch progress updated", user.watchHistory);

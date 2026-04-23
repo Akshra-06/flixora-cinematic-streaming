@@ -7,7 +7,7 @@ import { SmartSearch } from "@/components/SmartSearch";
 import { trendingMovies, topRated, actionMovies, comedyMovies, recentlyAdded } from "@/data/movies";
 import { useWatchHistory } from "@/hooks/useWatchHistory";
 import { useReactions } from "@/hooks/useReactions";
-
+const [continueWatching, setContinueWatching] = useState([]);
 const Index = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const { recentlyWatched, forYou, becauseYouWatched, topGenres } = useWatchHistory();

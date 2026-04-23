@@ -19,19 +19,28 @@ export default function Login() {
 
       const data = await res.json();
 
+      console.log("LOGIN RESPONSE:", data); // ✅ first
+
       if (!res.ok) {
         alert(data.message || "Login failed");
         return;
       }
-      console.log("LOGIN RESPONSE:", data);
-      localStorage.setItem("token", data.token);
+
+      const token = data.data?.token || data.token;
+
+      if (!token) {
+        alert("Token missing");
+        return;
+      }
+
+      localStorage.setItem("token", token);
+
       window.location.href = "/";
     } catch (err) {
       console.error(err);
       alert("Something went wrong");
     }
   };
-
   return (
     <div>
       <input value={email} onChange={(e) => setEmail(e.target.value)} />

@@ -111,7 +111,7 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute -top-4 -left-4 -right-4 z-30 rounded-lg overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.8)] bg-card border border-border/50"
+            className="absolute -bottom-4 -left-4 -right-4 z-30 rounded-lg overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.8)] bg-card border border-border/50"
           >
             {/* Preview — video trailer if available, else image */}
             <div className="relative aspect-video overflow-hidden">

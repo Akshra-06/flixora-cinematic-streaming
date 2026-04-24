@@ -147,12 +147,18 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
             </div>
 
             {/* Info Section */}
-            <div className="p-3.5">
-              {/* Action buttons */}
-              <div className="flex items-center gap-2 mb-3">
+            <div className="p-3.5 flex flex-col gap-3">
+              {/* Title — directly below trailer */}
+              <h3 className="text-base font-bold text-foreground leading-tight line-clamp-1">
+                {movie.title}
+              </h3>
+
+              {/* Action buttons — middle section */}
+              <div className="flex items-center gap-2">
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={(e) => { e.stopPropagation(); navigate(`/watch/${movie.id}`); }}
+                  title="Play"
                   className="w-9 h-9 rounded-full bg-primary flex items-center justify-center hover:bg-primary/85 transition-all duration-200 hover:scale-110 neon-glow"
                 >
                   <Play className="w-4 h-4 fill-primary-foreground text-primary-foreground ml-0.5" />
@@ -206,33 +212,40 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
                 <motion.button
                   whileTap={{ scale: 0.85 }}
                   onClick={(e) => { e.stopPropagation(); navigate(`/title/${movie.id}`); }}
+                  title="More Info"
                   className="w-9 h-9 rounded-full border-2 border-muted-foreground/40 flex items-center justify-center hover:border-foreground transition-all duration-200 hover:scale-110 bg-background/30 ml-auto"
                 >
                   <ChevronDown className="w-4 h-4 text-foreground" />
                 </motion.button>
               </div>
 
-              {/* Metadata row */}
-              <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="text-primary font-bold text-sm">{movie.match || 85}% Match</span>
-                {movie.maturity && (
-                  <span className="px-1.5 py-0.5 border border-muted-foreground/40 rounded text-[11px] text-muted-foreground font-medium">
-                    {movie.maturity}
-                  </span>
-                )}
-                <span className="text-sm text-muted-foreground">{movie.duration}</span>
-                <span className="px-1.5 py-0.5 border border-muted-foreground/30 rounded text-[10px] text-muted-foreground">
-                  HD
-                </span>
-              </div>
+              {/* Divider separating actions from metadata */}
+              <div className="h-px bg-border/60" />
 
-              {/* Genre tags */}
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="text-foreground/80">{movie.genre}</span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-                <span className="text-foreground/80">{movie.year}</span>
-                <span className="w-1 h-1 rounded-full bg-muted-foreground" />
-                <span className="text-foreground/80">{movie.rating}★</span>
+              {/* Bottom Section — all metadata grouped together */}
+              <div className="flex flex-col gap-1.5">
+                {/* Match · Maturity · Duration · HD */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-primary font-bold text-sm">{movie.match || 85}% Match</span>
+                  {movie.maturity && (
+                    <span className="px-1.5 py-0.5 border border-muted-foreground/40 rounded text-[11px] text-muted-foreground font-medium">
+                      {movie.maturity}
+                    </span>
+                  )}
+                  <span className="text-sm text-muted-foreground">{movie.duration}</span>
+                  <span className="px-1.5 py-0.5 border border-muted-foreground/30 rounded text-[10px] text-muted-foreground">
+                    HD
+                  </span>
+                </div>
+
+                {/* Genre · Year · Rating */}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
+                  <span className="text-foreground/80">{movie.genre}</span>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                  <span className="text-foreground/80">{movie.year}</span>
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground" />
+                  <span className="text-foreground/80">{movie.rating}★</span>
+                </div>
               </div>
             </div>
           </motion.div>

@@ -29,6 +29,20 @@ const formatTime = (s: number) => {
   return `${m}:${sec}`;
 };
 
+// ✅ Validate and sanitize YouTube embed URL
+const isValidYouTubeEmbed = (url: string): boolean => {
+  try {
+    const u = new URL(url);
+    return (
+      u.hostname.includes("youtube") ||
+      u.hostname.includes("youtu.be") ||
+      u.hostname.includes("youtube-nocookie")
+    );
+  } catch {
+    return false;
+  }
+};
+
 const Watch = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -37,9 +51,10 @@ const Watch = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout>>();
   const saveTimer = useRef<ReturnType<typeof setInterval>>();
-  
+
   const { getProgress, saveProgress } = usePlaybackProgress();
-  const iframeLoadedRef = useRef(false); // 🔥 ADD HERE
+  const iframeLoadedRef = useRef(false);
+  const trailerTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
 
   const [playing, setPlaying] = useState(true);
   const [muted, setMuted] = useState(false);
@@ -53,9 +68,9 @@ const Watch = () => {
   const [resumed, setResumed] = useState(false);
   const [trailerUrl, setTrailerUrl] = useState<string | null>(null);
   const [trailerLoading, setTrailerLoading] = useState(false);
+  const [useFallback, setUseFallback] = useState(false);
 
   const [nextItem, setNextItem] = useState<Content | undefined>(undefined);
-  // const [iframeLoaded, setIframeLoaded] = useState(false); // 🔥 ADD HERE
 
   const lastSavedRef = useRef(0);
   useEffect(() => {
@@ -67,53 +82,90 @@ const Watch = () => {
   useEffect(() => {
     const fetchTrailer = async () => {
       if (!item?.tmdbId) {
+        console.warn("[Trailer] No TMDB ID provided, using fallback");
         setTrailerUrl(null);
+        setUseFallback(true);
         return;
       }
 
       setTrailerLoading(true);
+      setUseFallback(false); // Reset fallback state before fetching
       try {
         const mediaType = item.type === "tv" ? "tv" : "movie";
+        const endpoint = `https://flixora-cinematic-streaming.onrender.com/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`;
 
-        const response = await authFetch(
-          `https://flixora-cinematic-streaming.onrender.com/api/movies/trailer/${item.tmdbId}?mediaType=${mediaType}`,
-        );
+        console.log("[Trailer] Fetching from:", endpoint);
 
+        const response = await authFetch(endpoint);
         const payload = await response.json();
 
-        console.log("TRAILER RESPONSE:", payload); // 🔥 ADD THIS
+        console.log(
+          "[Trailer] Response status:",
+          response.status,
+          "Body:",
+          payload,
+        );
 
         if (response.ok && payload?.data?.youtubeEmbedUrl) {
-          setTrailerUrl(payload.data.youtubeEmbedUrl);
+          const url = payload.data.youtubeEmbedUrl;
+
+          // ✅ Validate YouTube URL format
+          if (!isValidYouTubeEmbed(url)) {
+            console.error("[Trailer] Invalid YouTube URL format:", url);
+            setTrailerUrl(null);
+            setUseFallback(true);
+            setTrailerLoading(false);
+            return;
+          }
+
+          console.log("[Trailer] Valid YouTube URL found:", url);
+          setTrailerUrl(url);
           setUseFallback(false);
         } else {
+          console.warn("[Trailer] No valid trailer in response:", payload);
           setTrailerUrl(null);
           setUseFallback(true);
         }
-
-        setTrailerLoading(false); // ✅ ALWAYS RUN
       } catch (error) {
-        console.error("Trailer fetch failed:", error);
+        console.error("[Trailer] Fetch failed:", error);
         setTrailerUrl(null);
         setUseFallback(true);
+      } finally {
+        setTrailerLoading(false);
       }
     };
+
     fetchTrailer();
   }, [item?.tmdbId, item?.type]);
 
+  // ✅ Setup trailer loading timeout
   useEffect(() => {
-    if (!trailerUrl) return;
+    if (!trailerUrl) {
+      return;
+    }
 
     iframeLoadedRef.current = false;
 
-    const timer = setTimeout(() => {
+    // Clear existing timeout
+    if (trailerTimeoutRef.current) {
+      clearTimeout(trailerTimeoutRef.current);
+    }
+
+    // If iframe doesn't signal load within 5 seconds, fall back to video
+    trailerTimeoutRef.current = setTimeout(() => {
       if (!iframeLoadedRef.current) {
-        console.log("Trailer blocked → fallback");
+        console.warn(
+          "[Trailer] Iframe did not load within timeout (5s) → using fallback",
+        );
         setUseFallback(true);
       }
-    }, 3000); // slightly safer
+    }, 5000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (trailerTimeoutRef.current) {
+        clearTimeout(trailerTimeoutRef.current);
+      }
+    };
   }, [trailerUrl]);
 
   // Record watch + resume from saved progress
@@ -252,7 +304,6 @@ const Watch = () => {
     setVolume(nv);
     setMuted(nv === 0);
   };
-  const [useFallback, setUseFallback] = useState(false);
 
   // Reset fallback when movie changes
   useEffect(() => {
@@ -269,25 +320,28 @@ const Watch = () => {
         if (e.target === e.currentTarget) togglePlay();
       }}
     >
-      {false && trailerUrl ? (
+      {trailerUrl && !useFallback ? (
         <iframe
+          key={`trailer-${trailerUrl}`}
           src={trailerUrl}
           title={`${item.title} trailer`}
           allow="autoplay; encrypted-media; picture-in-picture"
           allowFullScreen
           className="absolute inset-0 w-full h-full bg-black"
           onLoad={() => {
-            // delay check after load
-            setTimeout(() => {
-              const iframe = document.querySelector("iframe");
-
-              if (iframe && iframe.clientHeight > 0) {
-                iframeLoadedRef.current = true;
-              } else {
-                setUseFallback(true);
-              }
-            }, 800);
+            console.log("[Trailer] Iframe onLoad fired");
+            iframeLoadedRef.current = true;
+            // Clear timeout since iframe loaded successfully
+            if (trailerTimeoutRef.current) {
+              clearTimeout(trailerTimeoutRef.current);
+            }
           }}
+          onError={() => {
+            console.error("[Trailer] Iframe onError fired → using fallback");
+            iframeLoadedRef.current = false;
+            setUseFallback(true);
+          }}
+          sandbox="allow-presentation allow-same-origin allow-scripts allow-popups"
         />
       ) : (
         <video

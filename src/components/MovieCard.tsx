@@ -111,10 +111,10 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: -10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute -bottom-4 -left-4 -right-4 z-30 rounded-lg overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.8)] bg-card border border-border/50"
+            className="absolute inset-0 z-30 rounded-md overflow-hidden shadow-[0_16px_60px_rgba(0,0,0,0.8)] bg-card border border-border/50 flex flex-col"
           >
             {/* Preview — video trailer if available, else image */}
-            <div className="relative aspect-video overflow-hidden">
+            <div className="relative w-full aspect-video overflow-hidden flex-shrink-0">
               {movie.videoUrl ? (
                 <video
                   ref={videoRef}
@@ -147,7 +147,7 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
             </div>
 
             {/* Info Section */}
-            <div className="px-3.5 pt-3.5 pb-2 flex flex-col gap-2.5">
+            <div className="px-3.5 pt-3 pb-3 flex flex-col gap-2.5 flex-1 justify-between">
               {/* Title — directly below trailer */}
               <h3 className="text-base font-bold text-foreground leading-tight line-clamp-1">
                 {movie.title}

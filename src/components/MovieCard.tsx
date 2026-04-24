@@ -147,7 +147,7 @@ export const MovieCard = ({ movie, index }: MovieCardProps) => {
             </div>
 
             {/* Info Section */}
-            <div className="p-3.5 flex flex-col gap-3">
+            <div className="px-3.5 pt-3.5 pb-2 flex flex-col gap-2.5">
               {/* Title — directly below trailer */}
               <h3 className="text-base font-bold text-foreground leading-tight line-clamp-1">
                 {movie.title}
